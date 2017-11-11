@@ -4,20 +4,34 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 /**
  * Created by Nithilan on 10/29/2017.
  * Tank Drive opmode for Golden Gear robot.
  */
 @TeleOp(name = "NS: Tank Drive", group = "Training")
 public class NS_OpMode_TankDrive extends OpMode {
+    private final class Regulator {
+        static final double FULL = 1.0;
+        static final double HALF = 0.5;
+        static final double FOURTH = 0.25;
+        static final double TENTH = 0.10;
+    }
+    private enum DriveMode {
+        RC_DRIVE, TANK_DRIVE
+    }
     NS_Robot_GoldenGears GGRobot = null;
-    boolean driveMode = false;
+    DriveMode driveMode = DriveMode.RC_DRIVE;
+    double driveRegulator = Regulator.FOURTH;
+    double armRegulator = Regulator.TENTH;
 
     @Override
     public void init() {
         GGRobot = new NS_Robot_GoldenGears(hardwareMap);
         telemetry.addData("Status", "Robot Initalized");
         telemetry.addData("Drive Mode", "Initalized to RC Drive");
+        telemetry.addData("Drive Speed", "Initialized to FOURTH");
     }
 
     @Override
@@ -28,19 +42,27 @@ public class NS_OpMode_TankDrive extends OpMode {
 
     @Override
     public void loop() {
-        double leftPower;
-        double rightPower;
-
-        if (gamepad1.right_bumper == true) {
-            driveMode = false;
+        if (gamepad1.a == true) {
+            driveMode = DriveMode.RC_DRIVE;
             telemetry.addData("Drive Mode", "Changed to RC Drive");
         }
-        else if (gamepad1.left_bumper == true) {
-            driveMode = true;
+        else if (gamepad1.b == true) {
+            driveMode = DriveMode.TANK_DRIVE;
             telemetry.addData("Drive Mode", "Changed to Tank Drive");
         }
 
-        if (driveMode == false) {
+        if (gamepad1.left_bumper == true) {
+            driveRegulator = Regulator.FOURTH;
+            telemetry.addData("Drive Speed", "FOURTH");
+        }
+        else if (gamepad1.right_bumper == true) {
+            driveRegulator = Regulator.FULL;
+            telemetry.addData("Drive Speed", "FULL");
+        }
+
+        double leftPower = 0.0;
+        double rightPower = 0.0;
+        if (driveMode == DriveMode.RC_DRIVE) {
             double drive = -gamepad1.left_stick_y;
             double turn  =  gamepad1.right_stick_x;
             leftPower    = Range.clip(drive + turn, -1.0, 1.0) ;
@@ -50,23 +72,27 @@ public class NS_OpMode_TankDrive extends OpMode {
             leftPower = -gamepad1.left_stick_y;
             rightPower = -gamepad1.right_stick_y;
         }
-        GGRobot.DriveRobot(leftPower, rightPower);
+        GGRobot.DriveRobot(leftPower * driveRegulator,
+                            rightPower * driveRegulator);
 
+        double armPower = 0.0;
         if (gamepad1.dpad_up == true) {
-            GGRobot.RotateArm(1.0);
+            armPower = 1.0;
         }
         else if (gamepad1.dpad_down == true) {
-            GGRobot.RotateArm(-1.0);
+            armPower = -1.0;
         }
         else {
-            GGRobot.RotateArm(0.0);
+            armPower = 0.0;
         }
+        GGRobot.RotateArm(armPower * armRegulator);
 
+        double advance = 0.005;
         if (gamepad1.dpad_left == true) {
-            GGRobot.ActuateClaw(true);
+            GGRobot.ActuateClaw(advance);
         }
         else if (gamepad1.dpad_right == true) {
-            GGRobot.ActuateClaw(false);
+            GGRobot.ActuateClaw(-advance);
         }
     }
 

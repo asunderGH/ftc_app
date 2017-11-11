@@ -23,7 +23,7 @@ public class NS_Robot_GoldenGears {
     private Servo clawRightServo = null;
 
 
-    public NS_Robot_GoldenGears(HardwareMap hm){
+    public NS_Robot_GoldenGears(HardwareMap hm) {
         hardwareMap = hm;
 
         driveLeftMotor = hardwareMap.dcMotor.get("driveLeftMotor");
@@ -39,34 +39,26 @@ public class NS_Robot_GoldenGears {
         this.Reset();
     }
 
-    public void Reset(){
+    public void Reset() {
         driveLeftMotor.setPower(0);
         driveRightMotor.setPower(0);
+        armElevationMotor.setPower(0);
 
         clawRightServo.setPosition(0.5);
         clawLeftServo.setPosition(0.5);
     }
 
-    public void DriveRobot(double driveLeftPower, double driveRightPower){
+    public void DriveRobot(double driveLeftPower, double driveRightPower) {
         driveLeftMotor.setPower(driveLeftPower);
         driveRightMotor.setPower(driveRightPower);
     }
 
-    public void RotateArm(double armPower){
-        double regulator = 0.10;
-        armElevationMotor.setPower(armPower * regulator);
+    public void RotateArm(double armPower) {
+        armElevationMotor.setPower(armPower);
     }
 
-    public void ActuateClaw(boolean open){
-        double position;
-        double delta = 0.005;
-
-        if (open == true){
-            position = clawLeftServo.getPosition() + delta;
-        }
-        else {
-            position = clawLeftServo.getPosition() - delta;
-        }
+    public void ActuateClaw(double advance) {
+        double position = clawLeftServo.getPosition() + advance;
         position = Range.clip(position, 0.0, 1.0);
 
         clawLeftServo.setPosition(position);
