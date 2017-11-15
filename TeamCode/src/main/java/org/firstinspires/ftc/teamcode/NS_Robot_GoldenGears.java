@@ -29,8 +29,11 @@ public class NS_Robot_GoldenGears {
         driveLeftMotor = hardwareMap.dcMotor.get("driveLeftMotor");
         driveRightMotor = hardwareMap.dcMotor.get("driveRightMotor");
         driveRightMotor.setDirection(DcMotor.Direction.REVERSE);
+        driveRightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        driveRightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         armElevationMotor = hardwareMap.dcMotor.get("armElevationMotor");
+        armElevationMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         clawLeftServo = hardwareMap.servo.get("clawLeftServo");
         clawRightServo = hardwareMap.servo.get("clawRightServo");
