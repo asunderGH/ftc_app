@@ -10,8 +10,8 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
  * Created by Nithilan on 10/29/2017.
  * Tank Drive opmode for Golden Gear robot.
  */
-@TeleOp(name = "NS: Tank Drive", group = "Training")
-public class NS_OpMode_TankDrive extends OpMode {
+@TeleOp(name = "NS: OpMode Drive", group = "Competition")
+public class NS_OpMode_Drive extends OpMode {
     private final class Regulator {
         static final double FULL = 1.0;
         static final double HALF = 0.5;
