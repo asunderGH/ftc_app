@@ -52,8 +52,8 @@ public class NS_Robot_GoldenGears {
         driveRightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         armElevationMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        clawRightServo.setPosition(0.5);
-        clawLeftServo.setPosition(0.5);
+        clawRightServo.setPosition(1.0);
+        clawLeftServo.setPosition(1.0);
     }
 
     public void DriveRobot(double driveLeftPower, double driveRightPower) {
@@ -85,6 +85,9 @@ public class NS_Robot_GoldenGears {
 
       driveLeftMotor.setTargetPosition((int)encoderTotalPulses);
       driveRightMotor.setTargetPosition(-(int)encoderTotalPulses);
+
+      driveLeftMotor.setPower(0.25);
+      driveRightMotor.setPower(0.25);
     }
 
     public void TurnLeft() {
@@ -96,6 +99,9 @@ public class NS_Robot_GoldenGears {
 
         driveLeftMotor.setTargetPosition(-(int)encoderTotalPulses);
         driveRightMotor.setTargetPosition((int)encoderTotalPulses);
+
+        driveLeftMotor.setPower(0.25);
+        driveRightMotor.setPower(0.25);
     }
 
     public void DriveForward() {
@@ -107,6 +113,9 @@ public class NS_Robot_GoldenGears {
 
         driveLeftMotor.setTargetPosition((int)encoderTotalPulses);
         driveRightMotor.setTargetPosition((int)encoderTotalPulses);
+
+        driveLeftMotor.setPower(0.25);
+        driveRightMotor.setPower(0.25);
     }
 
     public void DriveBackwards() {
@@ -118,6 +127,9 @@ public class NS_Robot_GoldenGears {
 
         driveLeftMotor.setTargetPosition(-(int)encoderTotalPulses);
         driveRightMotor.setTargetPosition(-(int)encoderTotalPulses);
+
+        driveLeftMotor.setPower(0.25);
+        driveRightMotor.setPower(0.25);
     }
 
 }
