@@ -42,11 +42,11 @@ public class NS_OpMode_Drive extends OpMode {
 
     @Override
     public void loop() {
-        if (gamepad1.a == true) {
+        if (gamepad1.right_stick_button == true) {
             driveMode = DriveMode.RC_DRIVE;
             telemetry.addData("Drive Mode", "Changed to RC Drive");
         }
-        else if (gamepad1.b == true) {
+        else if (gamepad1.left_stick_button == true) {
             driveMode = DriveMode.TANK_DRIVE;
             telemetry.addData("Drive Mode", "Changed to Tank Drive");
         }
