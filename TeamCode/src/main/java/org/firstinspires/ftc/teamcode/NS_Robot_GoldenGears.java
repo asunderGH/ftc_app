@@ -22,9 +22,12 @@ public class NS_Robot_GoldenGears {
     private Servo clawLeftServo = null;
     private Servo clawRightServo = null;
 
-    private final double encoderTotalPulses = 2000;
+    private final double encoderTotalPulses = 1440;
     private final double turnsShaftToWheel = 2;
-    private final double wheelCircumfrence = 4 * Math.PI;
+    private final double wheelCircumference = 4 * Math.PI;
+    private final double encoderPulsesPerInch = encoderTotalPulses
+                                                * turnsShaftToWheel
+                                                / wheelCircumference;
 
 
     public NS_Robot_GoldenGears(HardwareMap hm) {
@@ -48,20 +51,23 @@ public class NS_Robot_GoldenGears {
         driveRightMotor.setPower(0);
         armElevationMotor.setPower(0);
 
-        driveLeftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        driveRightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        driveLeftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        driveRightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         armElevationMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        this.ResetEncoders();
 
         clawRightServo.setPosition(1.0);
         clawLeftServo.setPosition(1.0);
     }
 
+    public void ResetEncoders () {
+        driveLeftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        driveRightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    }
+
     public void DriveRobot(double driveLeftPower, double driveRightPower) {
         driveLeftMotor.setPower(driveLeftPower);
         driveRightMotor.setPower(driveRightPower);
-
-        driveLeftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        driveRightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
     public void RotateArm(double armPower) {
@@ -74,62 +80,6 @@ public class NS_Robot_GoldenGears {
 
         clawLeftServo.setPosition(position);
         clawRightServo.setPosition(position);
-    }
-
-    public void TurnRight() {
-      driveLeftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-      driveRightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-      driveLeftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-      driveRightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-      driveLeftMotor.setTargetPosition((int)encoderTotalPulses);
-      driveRightMotor.setTargetPosition(-(int)encoderTotalPulses);
-
-      driveLeftMotor.setPower(0.25);
-      driveRightMotor.setPower(0.25);
-    }
-
-    public void TurnLeft() {
-        driveLeftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        driveRightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        driveLeftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        driveRightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        driveLeftMotor.setTargetPosition(-(int)encoderTotalPulses);
-        driveRightMotor.setTargetPosition((int)encoderTotalPulses);
-
-        driveLeftMotor.setPower(0.25);
-        driveRightMotor.setPower(0.25);
-    }
-
-    public void DriveForward() {
-        driveLeftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        driveRightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        driveLeftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        driveRightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        driveLeftMotor.setTargetPosition((int)encoderTotalPulses);
-        driveRightMotor.setTargetPosition((int)encoderTotalPulses);
-
-        driveLeftMotor.setPower(0.25);
-        driveRightMotor.setPower(0.25);
-    }
-
-    public void DriveBackwards() {
-        driveLeftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        driveRightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        driveLeftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        driveRightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        driveLeftMotor.setTargetPosition(-(int)encoderTotalPulses);
-        driveRightMotor.setTargetPosition(-(int)encoderTotalPulses);
-
-        driveLeftMotor.setPower(0.25);
-        driveRightMotor.setPower(0.25);
     }
 
 }
