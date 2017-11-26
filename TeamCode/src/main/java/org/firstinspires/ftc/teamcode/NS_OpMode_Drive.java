@@ -94,19 +94,7 @@ public class NS_OpMode_Drive extends OpMode {
         else if (gamepad1.dpad_right == true) {
             GGRobot.ActuateClaw(-advance);
         }
-
-        if (gamepad1.y == true) {
-            GGRobot.DriveForward();
-        }
-        else if (gamepad1.a == true) {
-            GGRobot.DriveBackwards();
-        }
-        else if (gamepad1.x == true) {
-            GGRobot.TurnLeft();
-        }
-        else if (gamepad1.b == true) {
-            GGRobot.TurnRight();
-        }
+        
     }
 
     @Override
