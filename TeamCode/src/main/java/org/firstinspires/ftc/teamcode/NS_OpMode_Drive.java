@@ -4,8 +4,6 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-
 /**
  * Created by Nithilan on 10/29/2017.
  * Tank Drive opmode for Golden Gear robot.
@@ -72,7 +70,7 @@ public class NS_OpMode_Drive extends OpMode {
             leftPower = -gamepad1.left_stick_y;
             rightPower = -gamepad1.right_stick_y;
         }
-        GGRobot.DriveRobot(leftPower * driveRegulator,
+        GGRobot.DriveTank(leftPower * driveRegulator,
                             rightPower * driveRegulator);
 
         double armPower = 0.0;

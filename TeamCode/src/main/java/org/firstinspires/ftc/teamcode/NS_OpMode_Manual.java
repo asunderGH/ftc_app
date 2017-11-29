@@ -74,7 +74,7 @@ public class NS_OpMode_Manual extends LinearOpMode {
                 leftPower = -gamepad1.left_stick_y;
                 rightPower = -gamepad1.right_stick_y;
             }
-            GGRobot.DriveRobot(leftPower * driveRegulator,
+            GGRobot.DriveTank(leftPower * driveRegulator,
                     rightPower * driveRegulator);
 
             double armPower = -gamepad2.left_stick_y;
