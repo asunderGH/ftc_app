@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -16,7 +17,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
  */
 
 @Autonomous(name = "NS: OpMode Autonomous", group = "Competition")
-
+@Disabled
 public class NS_OpMode_Autonomous extends LinearOpMode {
     NS_Robot_GoldenGears GGRobot = null;
 
@@ -70,6 +71,7 @@ public class NS_OpMode_Autonomous extends LinearOpMode {
         }
         GGRobot.ResetGyro();
         waitForStart();
+        GGRobot.Start();
         telemetry.addData("Status: ", "Robot started");
 
         // VuMark
@@ -97,7 +99,8 @@ public class NS_OpMode_Autonomous extends LinearOpMode {
         gyroHold( TURN_SPEED,   0.0, 1.0);    // Hold  0 Deg heading for a 1 second
         gyroDrive(DRIVE_SPEED,-48.0, 0.0);    // Drive REV 48 inches
         */
-        
+
+        GGRobot.Stop();
     }
 
     /**
@@ -182,4 +185,5 @@ public class NS_OpMode_Autonomous extends LinearOpMode {
         // Stop all motion;
         GGRobot.ResetDrive();
     }
+
 }

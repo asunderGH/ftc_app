@@ -44,16 +44,13 @@ public class NS_Robot_GoldenGears {
 
         driveLeftMotor = hardwareMap.dcMotor.get("driveLeftMotor");
         driveRightMotor = hardwareMap.dcMotor.get("driveRightMotor");
-        driveRightMotor.setDirection(DcMotor.Direction.REVERSE);
-
         armElevationMotor = hardwareMap.dcMotor.get("armElevationMotor");
 
         clawLeftServo = hardwareMap.servo.get("clawLeftServo");
         clawRightServo = hardwareMap.servo.get("clawRightServo");
-        clawRightServo.setDirection(Servo.Direction.REVERSE);
 
-        driveGyro = (ModernRoboticsI2cGyro)hardwareMap.gyroSensor.get("driveGyro");
-        driveGyro.calibrate();
+       // driveGyro = (ModernRoboticsI2cGyro)hardwareMap.gyroSensor.get("driveGyro");
+        //driveGyro.calibrate();
 
         this.Reset();
     }
@@ -65,6 +62,8 @@ public class NS_Robot_GoldenGears {
     }
 
     public void ResetDrive() {
+        driveRightMotor.setDirection(DcMotor.Direction.REVERSE);
+
         driveLeftMotor.setPower(0);
         driveRightMotor.setPower(0);
         armElevationMotor.setPower(0);
@@ -77,12 +76,27 @@ public class NS_Robot_GoldenGears {
     }
 
     public void ResetServo() {
-        clawRightServo.setPosition(1.0);
-        clawLeftServo.setPosition(1.0);
+        clawRightServo.setDirection(Servo.Direction.REVERSE);
+
+        // clawLeftServo.scaleRange(Servo.MIN_POSITION, Servo.MAX_POSITION);
+        // clawRightServo.scaleRange(Servo.MIN_POSITION, Servo.MAX_POSITION);
+
+        clawRightServo.setPosition(Servo.MAX_POSITION);
+        clawLeftServo.setPosition(Servo.MAX_POSITION);
     }
 
     public void ResetGyro(){
         driveGyro.resetZAxisIntegrator();
+    }
+
+    public void Start() {
+        this.Reset();
+        armElevationMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+    }
+
+    public void Stop() {
+        armElevationMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        this.Reset();
     }
 
     public boolean IsReady() {
@@ -116,7 +130,7 @@ public class NS_Robot_GoldenGears {
 
     public void ActuateClaw(double advance) {
         double position = clawLeftServo.getPosition() + advance;
-        position = Range.clip(position, 0.0, 1.0);
+        position = Range.clip(position, Servo.MIN_POSITION, Servo.MAX_POSITION);
 
         clawLeftServo.setPosition(position);
         clawRightServo.setPosition(position);

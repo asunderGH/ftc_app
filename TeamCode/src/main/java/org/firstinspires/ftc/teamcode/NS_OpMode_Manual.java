@@ -22,7 +22,7 @@ public class NS_OpMode_Manual extends LinearOpMode {
     NS_Robot_GoldenGears GGRobot = null;
     DriveMode driveMode = DriveMode.RC_DRIVE;
     double driveRegulator = Regulator.FOURTH;
-    double armRegulator = Regulator.TENTH;
+    double armRegulator = Regulator.FOURTH;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -32,7 +32,7 @@ public class NS_OpMode_Manual extends LinearOpMode {
         telemetry.addData("Drive Speed", "Initialized to FOURTH");
 
         waitForStart();
-        GGRobot.Reset();
+        GGRobot.Start();
         telemetry.addData("Status", "Robot Started");
 
         while (opModeIsActive()) {
@@ -89,6 +89,6 @@ public class NS_OpMode_Manual extends LinearOpMode {
             }
         }
 
-        GGRobot.Reset();
+        GGRobot.Stop();
     }
 }

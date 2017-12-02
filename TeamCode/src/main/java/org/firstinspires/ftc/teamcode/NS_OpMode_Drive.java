@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
@@ -9,6 +10,8 @@ import com.qualcomm.robotcore.util.Range;
  * Tank Drive opmode for Golden Gear robot.
  */
 @TeleOp(name = "NS: OpMode Drive", group = "Competition")
+@Disabled
+
 public class NS_OpMode_Drive extends OpMode {
     private final class Regulator {
         static final double FULL = 1.0;
