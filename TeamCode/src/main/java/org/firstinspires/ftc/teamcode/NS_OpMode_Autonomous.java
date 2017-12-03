@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -17,7 +16,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
  */
 
 @Autonomous(name = "NS: OpMode Autonomous", group = "Competition")
-@Disabled
+
 public class NS_OpMode_Autonomous extends LinearOpMode {
     NS_Robot_GoldenGears GGRobot = null;
 
@@ -28,14 +27,18 @@ public class NS_OpMode_Autonomous extends LinearOpMode {
 
     // These constants define the desired driving/control characteristics
     // The can/should be tweaked to suite the specific robot drive train.
-    static final double     DRIVE_SPEED             = 0.7;     // Nominal speed for better accuracy.
+    static final double     DRIVE_SPEED             = 1.0;     // Nominal speed for better accuracy.
     static final double     TURN_SPEED              = 0.5;     // Nominal half speed for better accuracy.
+    static final double     ARM_SPEED               = 0.2;
 
     // Gyro Drive
     static final double     HEADING_THRESHOLD       = 1 ;      // As tight as we can make it with an integer gyro
     static final double     P_TURN_COEFF            = 0.1;     // Larger is more responsive, but also less stable
     static final double     P_DRIVE_COEFF           = 0.15;     // Larger is more responsive, but also less stable
 
+    private enum Platform {
+        R1, R2, B1, B2
+    }
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -65,14 +68,25 @@ public class NS_OpMode_Autonomous extends LinearOpMode {
         // Gyro Drive
 
         // Verify the robot is ready
-        while (!isStopRequested() && GGRobot.IsReady())  {
+        while (!isStopRequested() && !GGRobot.IsReady())  {
             sleep(50);
             idle();
         }
         GGRobot.ResetGyro();
+
         waitForStart();
         GGRobot.Start();
         telemetry.addData("Status: ", "Robot started");
+
+        GGRobot.PositionClaw(0.4);
+        while (!isStopRequested() && GGRobot.IsClawActuating()) {
+            sleep(50);
+            idle();
+        }
+        telemetry.addData("Status: ", "Glyph grabbed");
+        GGRobot.RotateArm(ARM_SPEED);
+        sleep(500);
+        GGRobot.RotateArm(0.0);
 
         // VuMark
         telemetry.addData("VuMark: ", "Decoding target");
@@ -99,6 +113,38 @@ public class NS_OpMode_Autonomous extends LinearOpMode {
         gyroHold( TURN_SPEED,   0.0, 1.0);    // Hold  0 Deg heading for a 1 second
         gyroDrive(DRIVE_SPEED,-48.0, 0.0);    // Drive REV 48 inches
         */
+        // gyroDrive(DRIVE_SPEED, 24.0, 0.0);
+        // gyroTurn(TURN_SPEED, 90.0);
+        // gyroDrive(DRIVE_SPEED, 24.0, -45.0);*/
+
+        Platform plat = Platform.B1;
+        if (plat == Platform.R1) {
+            gyroDrive(DRIVE_SPEED, -24, 0.0);
+            gyroTurn(TURN_SPEED, 45.0);
+            gyroDrive(DRIVE_SPEED, -13.42, 0.0);
+            gyroTurn(TURN_SPEED, 45.0);
+            gyroDrive(DRIVE_SPEED, 12.0, 0.0);
+        }
+        else if (plat == Platform.R2) {
+            gyroDrive(DRIVE_SPEED, -24, 0.0);
+            gyroDrive(DRIVE_SPEED, 6, 0.0);
+            gyroTurn(TURN_SPEED, 90.0);
+            gyroDrive(DRIVE_SPEED, -24, 0.0);
+            gyroTurn(TURN_SPEED, 45.0);
+            gyroDrive(DRIVE_SPEED, 3, 0.0);
+        }
+        else if (plat == Platform.B1) {
+            gyroDrive(DRIVE_SPEED, -48, 0.0);
+            gyroTurn(TURN_SPEED, 45.0);
+            gyroDrive(DRIVE_SPEED, -13.42, 0.0);
+            gyroTurn(TURN_SPEED, 45.0);
+            gyroDrive(DRIVE_SPEED, 12, 0.0);
+        }
+        else if (plat == Platform.B2) {
+            gyroDrive(DRIVE_SPEED, 24, 0.0);
+            gyroTurn(TURN_SPEED, -20.0);
+            gyroDrive(DRIVE_SPEED, 4, 0.0);
+        }
 
         GGRobot.Stop();
     }
