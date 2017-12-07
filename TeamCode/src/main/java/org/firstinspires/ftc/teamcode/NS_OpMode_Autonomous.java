@@ -15,9 +15,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
  * Created by Nithilan on 11/26/2017.
  */
 
-@Autonomous(name = "NS: OpMode Autonomous", group = "Competition")
+@SuppressWarnings("Autonomous")
 
-public class NS_OpMode_Autonomous extends LinearOpMode {
+public abstract class NS_OpMode_Autonomous extends LinearOpMode {
     NS_Robot_GoldenGears GGRobot = null;
 
     // VuMark
@@ -39,6 +39,8 @@ public class NS_OpMode_Autonomous extends LinearOpMode {
     private enum Platform {
         R1, R2, B1, B2
     }
+
+    public abstract void DriveAutonomous();
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -79,7 +81,7 @@ public class NS_OpMode_Autonomous extends LinearOpMode {
         telemetry.addData("Status: ", "Robot started");
 
         GGRobot.PositionClaw(0.4);
-        while (!isStopRequested() && GGRobot.IsClawActuating()) {
+        while (opModeIsActive() && GGRobot.IsClawActuating()) {
             sleep(50);
             idle();
         }
@@ -113,40 +115,11 @@ public class NS_OpMode_Autonomous extends LinearOpMode {
         gyroHold( TURN_SPEED,   0.0, 1.0);    // Hold  0 Deg heading for a 1 second
         gyroDrive(DRIVE_SPEED,-48.0, 0.0);    // Drive REV 48 inches
         */
-        // gyroDrive(DRIVE_SPEED, 24.0, 0.0);
-        // gyroTurn(TURN_SPEED, 90.0);
-        // gyroDrive(DRIVE_SPEED, 24.0, -45.0);*/
 
-        Platform plat = Platform.B1;
-        if (plat == Platform.R1) {
-            gyroDrive(DRIVE_SPEED, -24, 0.0);
-            gyroTurn(TURN_SPEED, 45.0);
-            gyroDrive(DRIVE_SPEED, -13.42, 0.0);
-            gyroTurn(TURN_SPEED, 45.0);
-            gyroDrive(DRIVE_SPEED, 12.0, 0.0);
-        }
-        else if (plat == Platform.R2) {
-            gyroDrive(DRIVE_SPEED, -24, 0.0);
-            gyroDrive(DRIVE_SPEED, 6, 0.0);
-            gyroTurn(TURN_SPEED, 90.0);
-            gyroDrive(DRIVE_SPEED, -24, 0.0);
-            gyroTurn(TURN_SPEED, 45.0);
-            gyroDrive(DRIVE_SPEED, 3, 0.0);
-        }
-        else if (plat == Platform.B1) {
-            gyroDrive(DRIVE_SPEED, -48, 0.0);
-            gyroTurn(TURN_SPEED, 45.0);
-            gyroDrive(DRIVE_SPEED, -13.42, 0.0);
-            gyroTurn(TURN_SPEED, 45.0);
-            gyroDrive(DRIVE_SPEED, 12, 0.0);
-        }
-        else if (plat == Platform.B2) {
-            gyroDrive(DRIVE_SPEED, 24, 0.0);
-            gyroTurn(TURN_SPEED, -20.0);
-            gyroDrive(DRIVE_SPEED, 4, 0.0);
-        }
+        NS_OpMode_Autonomous.this.DriveAutonomous();
 
-        GGRobot.Stop();
+        // Commented to prevent possible application crash
+        // GGRobot.Stop();
     }
 
     /**
