@@ -87,8 +87,19 @@ public class NS_OpMode_Manual extends LinearOpMode {
             else if (gamepad2.right_stick_x > 0) {
                 GGRobot.ActuateClaw(-advance);
             }
+
+            if (gamepad2.dpad_up == true) {
+                GGRobot.ActuateJewelArm(0.0005);
+            }
+            else if (gamepad2.dpad_down == true) {
+                GGRobot.ActuateJewelArm(-0.0005);
+            }
         }
 
         GGRobot.Stop();
+        while (GGRobot.IsBusy())  {
+            sleep(50);
+            idle();
+        }
     }
 }

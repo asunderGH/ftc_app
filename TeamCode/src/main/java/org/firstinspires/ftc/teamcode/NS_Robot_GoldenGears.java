@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -38,6 +39,9 @@ public class NS_Robot_GoldenGears {
     private double clawPosition = Servo.MAX_POSITION;
     private final double clawThreshold = 0.03;
 
+    private Servo jewelServo = null;
+    private ColorSensor jewelSensor = null;
+
     private final double encoderTotalPulses = 1440;
     private final double turnsShaftToWheel = 2;
     private final double wheelCircumference = 4 * Math.PI;
@@ -69,6 +73,9 @@ public class NS_Robot_GoldenGears {
         clawLeftServo = hardwareMap.servo.get("clawLeftServo");
         clawRightServo = hardwareMap.servo.get("clawRightServo");
 
+        jewelServo = hardwareMap.servo.get("jewelServo");
+        jewelSensor = hardwareMap.colorSensor.get("jewelSensor");
+
        // driveGyro = (ModernRoboticsI2cGyro)hardwareMap.gyroSensor.get("driveGyro");
         //driveGyro.calibrate();
 
@@ -76,38 +83,55 @@ public class NS_Robot_GoldenGears {
     }
 
     public void Reset() {
-        this.ResetDrive();
-        this.ResetEncoders();
-        this.ResetServo();
         this.ResetIMU();
+        this.ResetDrive();
+        this.ResetGlyphHand();
+        this.ResetJewelHand();
     }
 
     public void ResetDrive() {
+        this.ResetDriveMotors();
+        this.ResetDriveEncoders();
+    }
+    
+    public void ResetDriveMotors(){
         driveRightMotor.setDirection(DcMotor.Direction.REVERSE);
 
         driveLeftMotor.setPower(0);
         driveRightMotor.setPower(0);
-        armElevationMotor.setPower(0);
     }
 
-    public void ResetEncoders () {
+    public void ResetDriveEncoders () {
         driveLeftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         driveRightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        armElevationMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
-    public void ResetServo() {
+    public void ResetGlyphHand() {
+        this.ResetGlyphArm();
+        this.ResetGlyphClaw();
+    }
+
+    public void ResetGlyphClaw() {
         clawRightServo.setDirection(Servo.Direction.REVERSE);
 
         // clawLeftServo.scaleRange(Servo.MIN_POSITION, Servo.MAX_POSITION);
         // clawRightServo.scaleRange(Servo.MIN_POSITION, Servo.MAX_POSITION);
 
-        clawRightServo.setPosition(Servo.MAX_POSITION);
-        clawLeftServo.setPosition(Servo.MAX_POSITION);
+        clawRightServo.setPosition(0.6);
+        clawLeftServo.setPosition(0.6);
     }
 
-    public void ResetGyro(){
-        // driveGyro.resetZAxisIntegrator();
+    public void ResetGlyphArm() {
+        armElevationMotor.setPower(0);
+        armElevationMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
+
+    public void ResetJewelHand() {
+        this.ResetJewelArm();
+    }
+
+    public void ResetJewelArm () {
+        jewelServo.setPosition(Servo.MAX_POSITION);
     }
 
     public void ResetIMU() {
@@ -133,15 +157,24 @@ public class NS_Robot_GoldenGears {
         this.Reset();
         imu.startAccelerationIntegration(new Position(), new Velocity(), imuPollInterval);
         armElevationMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        driveLeftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        driveRightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
     public void Stop() {
         armElevationMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        driveLeftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        driveRightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         this.Reset();
     }
 
-    public boolean IsReady() {
-        return true; // !driveGyro.isCalibrating();
+    public boolean IsBusy() {
+        // return true if robot is idle
+        return (driveLeftMotor.isBusy()
+                || driveRightMotor.isBusy()
+                || armElevationMotor.isBusy());
+                // || IsClawActuating());
+        // return true; // !driveGyro.isCalibrating();
     }
 
     public boolean IsDriving() {
@@ -183,8 +216,14 @@ public class NS_Robot_GoldenGears {
         PositionClaw(position);
     }
 
+    public void ActuateJewelArm(double delta) {
+        double jewelPosition = jewelServo.getPosition() + delta;
+        jewelPosition = Range.clip(jewelPosition, 0.5, Servo.MAX_POSITION);
+        jewelServo.setPosition(jewelPosition);
+    }
+
     public void PositionClaw(double position) {
-        clawPosition = Range.clip(position, Servo.MIN_POSITION, Servo.MAX_POSITION);
+        clawPosition = Range.clip(position, Servo.MIN_POSITION, 0.6);
 
         clawLeftServo.setPosition(clawPosition);
         clawRightServo.setPosition(clawPosition);
@@ -213,6 +252,36 @@ public class NS_Robot_GoldenGears {
         driveDistance = distance;
         drivePower = Range.clip(Math.abs(power), 0.0, 1.0);
         this.DriveTank(drivePower, drivePower);
+    }
+
+    public void positionJewelArm (double position) {
+        jewelServo.setPosition(Range.clip(position, 0.45, Servo.MAX_POSITION));
+    }
+
+    public boolean isJewelRed() {
+        return (jewelSensor.red() > jewelSensor.blue());
+    }
+
+    public boolean KnockRed() {
+        jewelServo.setPosition(0.5);
+
+        if (jewelSensor.red() > jewelSensor.blue()) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    public boolean KnockBlue(){
+        jewelServo.setPosition(0.5);
+
+        if (jewelSensor.blue() > jewelSensor.red()) {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     public void OnDriveAngle(double angle, double driveCoeff) {
