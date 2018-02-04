@@ -37,17 +37,17 @@ public class NS_Robot_GoldenGears {
     private Servo clawLeftServo = null;
     private Servo clawRightServo = null;
     private double clawPosition = Servo.MAX_POSITION;
-    private final double clawThreshold = 0.03;
+    private final double clawThreshold = 0.05;
 
     private Servo jewelServo = null;
     private ColorSensor jewelSensor = null;
 
     private final double encoderTotalPulses = 1440;
-    private final double turnsShaftToWheel = 2;
+    private final double turnsShaftToWheel = 1;
     private final double wheelCircumference = 4 * Math.PI;
     private final double encoderPulsesPerInch = encoderTotalPulses
-                                                * turnsShaftToWheel
-                                                / wheelCircumference;
+            * turnsShaftToWheel
+            / wheelCircumference;
 
     private ModernRoboticsI2cGyro driveGyro = null;
 
@@ -59,8 +59,6 @@ public class NS_Robot_GoldenGears {
     // State used for updating telemetry
     private Orientation orientationAngles;
     // private Acceleration gravity;
-
-
 
 
     NS_Robot_GoldenGears(HardwareMap hm) {
@@ -76,32 +74,33 @@ public class NS_Robot_GoldenGears {
         jewelServo = hardwareMap.servo.get("jewelServo");
         jewelSensor = hardwareMap.colorSensor.get("jewelSensor");
 
-       // driveGyro = (ModernRoboticsI2cGyro)hardwareMap.gyroSensor.get("driveGyro");
+        // driveGyro = (ModernRoboticsI2cGyro)hardwareMap.gyroSensor.get("driveGyro");
         //driveGyro.calibrate();
 
+        this.ResetIMU();
         this.Reset();
     }
 
     public void Reset() {
-        this.ResetIMU();
         this.ResetDrive();
         this.ResetGlyphHand();
         this.ResetJewelHand();
+        this.jewelSensor.enableLed(false);
     }
 
     public void ResetDrive() {
         this.ResetDriveMotors();
         this.ResetDriveEncoders();
     }
-    
-    public void ResetDriveMotors(){
-        driveRightMotor.setDirection(DcMotor.Direction.REVERSE);
+
+    public void ResetDriveMotors() {
+        driveLeftMotor.setDirection(DcMotor.Direction.REVERSE);
 
         driveLeftMotor.setPower(0);
         driveRightMotor.setPower(0);
     }
 
-    public void ResetDriveEncoders () {
+    public void ResetDriveEncoders() {
         driveLeftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         driveRightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
@@ -117,21 +116,22 @@ public class NS_Robot_GoldenGears {
         // clawLeftServo.scaleRange(Servo.MIN_POSITION, Servo.MAX_POSITION);
         // clawRightServo.scaleRange(Servo.MIN_POSITION, Servo.MAX_POSITION);
 
-        clawRightServo.setPosition(0.6);
-        clawLeftServo.setPosition(0.6);
+        // clawRightServo.setPosition(0.6);
+        // clawLeftServo.setPosition(0.6);
     }
 
     public void ResetGlyphArm() {
         armElevationMotor.setPower(0);
-        armElevationMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        // armElevationMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     public void ResetJewelHand() {
+        jewelServo.setDirection(Servo.Direction.REVERSE);
         this.ResetJewelArm();
     }
 
-    public void ResetJewelArm () {
-        jewelServo.setPosition(Servo.MAX_POSITION);
+    public void ResetJewelArm() {
+        // jewelServo.setPosition(Servo.MAX_POSITION);
     }
 
     public void ResetIMU() {
@@ -139,11 +139,11 @@ public class NS_Robot_GoldenGears {
         // algorithm here just reports accelerations to the logcat log; it doesn't actually
         // provide positional information.
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
         parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
-        parameters.loggingEnabled      = true;
-        parameters.loggingTag          = "IMU";
+        parameters.loggingEnabled = true;
+        parameters.loggingTag = "IMU";
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
 
         // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
@@ -162,19 +162,16 @@ public class NS_Robot_GoldenGears {
     }
 
     public void Stop() {
+        this.Reset();
         armElevationMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         driveLeftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         driveRightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        this.Reset();
     }
 
     public boolean IsBusy() {
         // return true if robot is idle
-        return (driveLeftMotor.isBusy()
-                || driveRightMotor.isBusy()
-                || armElevationMotor.isBusy());
-                // || IsClawActuating());
-        // return true; // !driveGyro.isCalibrating();
+        return (this.IsDriving() || armElevationMotor.isBusy());
+        // return false; // !driveGyro.isCalibrating();
     }
 
     public boolean IsDriving() {
@@ -188,8 +185,7 @@ public class NS_Robot_GoldenGears {
     public void DriveTank(double leftPower, double rightPower) {
         // Normalize speeds if either one exceeds +/- 1.0;
         double max = Math.max(Math.abs(leftPower), Math.abs(rightPower));
-        if (max > 1.0)
-        {
+        if (max > 1.0) {
             leftPower /= max;
             rightPower /= max;
         }
@@ -200,15 +196,6 @@ public class NS_Robot_GoldenGears {
 
     public void RotateArm(double armPower) {
         armElevationMotor.setPower(armPower);
-    }
-
-    public boolean IsClawActuating() {
-        boolean result = false;
-
-        if (Math.abs(clawPosition - clawRightServo.getPosition()) > clawThreshold)
-            result = true;
-
-        return result;
     }
 
     public void ActuateClaw(double advance) {
@@ -229,6 +216,10 @@ public class NS_Robot_GoldenGears {
         clawRightServo.setPosition(clawPosition);
     }
 
+    public void SwitchLightState(boolean state) {
+        jewelSensor.enableLed(state);
+    }
+
     public void OnDriveDistance(double distance, double power) {
         driveLeftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         driveRightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -237,7 +228,7 @@ public class NS_Robot_GoldenGears {
          * for all given angles. Alternate is to calculate the target
          * position based on the drive angle and set them as position.
          */
-        int moveCounts = (int)(distance * encoderPulsesPerInch);
+        int moveCounts = (int) (distance * encoderPulsesPerInch);
         int newLeftTarget = driveLeftMotor.getCurrentPosition() + moveCounts;
         int newRightTarget = driveRightMotor.getCurrentPosition() + moveCounts;
 
@@ -254,7 +245,7 @@ public class NS_Robot_GoldenGears {
         this.DriveTank(drivePower, drivePower);
     }
 
-    public void positionJewelArm (double position) {
+    public void positionJewelArm(double position) {
         jewelServo.setPosition(Range.clip(position, 0.45, Servo.MAX_POSITION));
     }
 
@@ -267,29 +258,29 @@ public class NS_Robot_GoldenGears {
 
         if (jewelSensor.red() > jewelSensor.blue()) {
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     }
 
-    public boolean KnockBlue(){
+    public boolean KnockBlue() {
         jewelServo.setPosition(0.5);
 
         if (jewelSensor.blue() > jewelSensor.red()) {
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     }
 
+
+
     public void OnDriveAngle(double angle, double driveCoeff) {
-        double  max;
-        double  error;
-        double  steer;
-        double  leftPower;
-        double  rightPower;
+        double max;
+        double error;
+        double steer;
+        double leftPower;
+        double rightPower;
 
         // adjust relative speed based on heading error.
         error = angularError(angle);
@@ -322,13 +313,13 @@ public class NS_Robot_GoldenGears {
      * @param angle     Absolute Angle (in Degrees) relative to last gyro reset.
      *                  0 = fwd. +ve is CCW from fwd. -ve is CW from forward.
      *                  If a relative angle is required, add/subtract from current heading.
-     * @param turnCoeff    Proportional Gain coefficient
+     * @param turnCoeff Proportional Gain coefficient
      * @return
      */
     public boolean OnDriveTurn(double power, double angle, double turnCoeff, double threshold) {
-        double   error ;
-        double   steer ;
-        boolean  onTarget = false ;
+        double error;
+        double steer;
+        boolean onTarget = false;
         double leftPower;
         double rightPower;
 
@@ -337,14 +328,13 @@ public class NS_Robot_GoldenGears {
 
         if (Math.abs(error) <= threshold) {
             steer = 0.0;
-            leftPower  = 0.0;
+            leftPower = 0.0;
             rightPower = 0.0;
             onTarget = true;
-        }
-        else {
+        } else {
             steer = angularSteer(error, turnCoeff);
-            rightPower  = power * steer;
-            leftPower   = -rightPower;
+            rightPower = power * steer;
+            leftPower = -rightPower;
         }
 
         // Send desired speeds to motors.
@@ -361,9 +351,10 @@ public class NS_Robot_GoldenGears {
 
     /**
      * angularError determines the error between the target angle and the robot's current heading
-     * @param   targetAngle  Desired angle (relative to global reference established at last Gyro Reset).
-     * @return  error angle: Degrees in the range +/- 180. Centered on the robot's frame of reference
-     *          +ve error means the robot should turn LEFT (CCW) to reduce error.
+     *
+     * @param targetAngle Desired angle (relative to global reference established at last Gyro Reset).
+     * @return error angle: Degrees in the range +/- 180. Centered on the robot's frame of reference
+     * +ve error means the robot should turn LEFT (CCW) to reduce error.
      */
     private double angularError(double targetAngle) {
 
@@ -378,15 +369,16 @@ public class NS_Robot_GoldenGears {
         // calculate error in -179 to +180 range  (
         // robotError = targetAngle - driveGyro.getIntegratedZValue();
         robotError = targetAngle - orientationAngles.firstAngle;
-        while (robotError > 180)  robotError -= 360;
+        while (robotError > 180) robotError -= 360;
         while (robotError <= -180) robotError += 360;
         return robotError;
     }
 
     /**
      * returns desired steering force.  +/- 1 range.  +ve = steer left
-     * @param error   Error angle in robot relative degrees
-     * @param PCoeff  Proportional Gain Coefficient
+     *
+     * @param error  Error angle in robot relative degrees
+     * @param PCoeff Proportional Gain Coefficient
      * @return
      */
     private double angularSteer(double error, double PCoeff) {
