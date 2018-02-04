@@ -10,11 +10,13 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 public class NS_OpMode_Autonomous_R2 extends NS_OpMode_Autonomous {
     @Override
     public void DriveAutonomous() {
+        if (opModeIsActive()) KnockJewel(Jewel.BLUE);
+
         if (opModeIsActive()) gyroDrive(DRIVE_SPEED, -24, 0.0);
-        if (opModeIsActive()) gyroDrive(DRIVE_SPEED, 6, 0.0);
-        if (opModeIsActive()) gyroTurn(TURN_SPEED, 90.0);
-        if (opModeIsActive()) gyroDrive(DRIVE_SPEED, -24, 0.0);
-        if (opModeIsActive()) gyroTurn(TURN_SPEED, 45.0);
-        if (opModeIsActive()) gyroDrive(DRIVE_SPEED, 3, 0.0);
+        if (opModeIsActive()) gyroDrive(DRIVE_SPEED, 2, 0.0);
+        if (opModeIsActive()) gyroTurn(TURN_SPEED, 137.0);
+        if (opModeIsActive()) gyroDrive(DRIVE_SPEED, -13.2, 0.0);
+        if (opModeIsActive()) gyroTurn(TURN_SPEED, 194.0);
+        if (opModeIsActive()) gyroDrive(DRIVE_SPEED, 6.5, 0.0);
     }
 }
