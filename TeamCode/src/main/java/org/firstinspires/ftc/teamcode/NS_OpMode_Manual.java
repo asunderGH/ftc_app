@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
 /**
@@ -93,6 +94,20 @@ public class NS_OpMode_Manual extends LinearOpMode {
             }
             else if (gamepad2.dpad_down == true) {
                 GGRobot.ActuateJewelArm(-0.0005);
+            }
+
+            if (gamepad2.x == true) {
+                GGRobot.positionJewelArm(0.5);
+            }
+            else if (gamepad2.y == true) {
+                GGRobot.positionJewelArm(Servo.MAX_POSITION);
+            }
+
+            if (gamepad1.right_bumper == true) {
+                GGRobot.SwitchLightState(true);
+            }
+            else if (gamepad1.right_bumper == false) {
+                GGRobot.SwitchLightState(false);
             }
         }
 
