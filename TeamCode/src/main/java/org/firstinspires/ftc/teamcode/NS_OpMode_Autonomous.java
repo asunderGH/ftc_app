@@ -4,9 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
-import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
@@ -29,8 +27,8 @@ public abstract class NS_OpMode_Autonomous extends LinearOpMode {
 
     // These constants define the desired driving/control characteristics
     // The can/should be tweaked to suite the specific robot drive train.
-    static final double     DRIVE_SPEED             = 0.3;     // Nominal speed for better accuracy.
-    static final double     TURN_SPEED              = 0.4;     // Nominal half speed for better accuracy.
+    static final double     DRIVE_SPEED             = 0.1;     // Nominal speed for better accuracy.
+    static final double     TURN_SPEED              = 0.1;     // Nominal half speed for better accuracy.
     static final double     ARM_SPEED               = 0.2;
 
     // Gyro Drive
@@ -55,9 +53,10 @@ public abstract class NS_OpMode_Autonomous extends LinearOpMode {
          */
 
         GGRobot = new NS_Robot_GoldenGears(hardwareMap);
-        telemetry.addData("Status: ", "Robot initialized");
+        telemetry.addData("Status: ", "Robot Initialized");
+        telemetry.update();
         // VuMark
-        initVuMark();
+        //initVuMark();
         // Verify the robot is ready
         while (!isStopRequested() && GGRobot.IsBusy())  {
             sleep(50);
@@ -66,27 +65,35 @@ public abstract class NS_OpMode_Autonomous extends LinearOpMode {
 
         waitForStart();
         GGRobot.Start();
-        telemetry.addData("Status: ", "Robot started");
+        telemetry.addData("Status: ", "Robot Started");
+        telemetry.update();
+
 
         // Load the glyph
         grabGlyph();
+        telemetry.addData("Status", "Glyph Grabbed");
+        telemetry.update();
         // VuMark
-        getVuMark();
+        //getVuMark();
 
         // Gyro Drive
+        telemetry.addData("Status", "Autonomous Drive Starting");
+        telemetry.update();
         NS_OpMode_Autonomous.this.DriveAutonomous();
-
+        telemetry.addData("Status", "Autonomous Drive Complete");
+        telemetry.update();
         dropGlyph();
+        telemetry.addData("Status", "Glyph Dropped");
+        telemetry.update();
         // Commented to prevent possible application crash
 
         GGRobot.Stop();
-        while (GGRobot.IsBusy())  {
-            sleep(50);
-            idle();
-        }
+        telemetry.addData("Status", "Robot Stopped");
+        telemetry.update();
+        sleep(1000);
     }
 
-    private void initVuMark() {
+    /*private void initVuMark() {
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
         parameters.vuforiaLicenseKey = "AXFmWqD/////AAAAGcQnWrSZvE1AhYt9fSvjbLhCIaNZZUuskVeDd4leXiCP1m03vRltyNPflJVYp8aCNJWor3BBw1OSVr+ykNY6LBTrakg4pDgBBl+GP08GRwlaGdYHGRwMayINjNZfXEflnGzt4tERZA7Dab+c5pNsyn3EvyMmFabBg7LHefKWWkdP489G2/g0Pj7BDITZfiUCFlTMl0Zzv3SLQIA2ri8u77/FbfgKF5UrqLH0Am7rN3Q8l6BNBktQ69itm867v06ENiwzHRBNkGymjT2arEWwp43rL3JjxKMg8XP+75YIyfEAJ/87lBCHfAODClGmTITQu42UgFBAQUmnIVb/SVMZnKALPrdMPuUG+LMZwOgGe4f1";
@@ -97,9 +104,9 @@ public abstract class NS_OpMode_Autonomous extends LinearOpMode {
         relicTemplate.setName("relicVuMarkTemplate"); // can help in debugging; otherwise not necessary
         telemetry.addData("VuMark: ", "Vuforia initialized");
         telemetry.update();
-    }
+    }*/
 
-    private void getVuMark() {
+    /*private void getVuMark() {
         telemetry.addData("VuMark: ", "Decoding target");
         relicTrackables.activate();
         RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
@@ -108,15 +115,11 @@ public abstract class NS_OpMode_Autonomous extends LinearOpMode {
         }
         relicTrackables.deactivate();
         telemetry.addData("VuMark: ", "Identified target = %s", vuMark);
-    }
+    }*/
 
     private void grabGlyph() {
         GGRobot.PositionClaw(0.4);
-        while (opModeIsActive() && GGRobot.IsClawActuating()) {
-            sleep(50);
-            idle();
-        }
-        telemetry.addData("Status: ", "Glyph grabbed");
+        sleep(200);
         GGRobot.RotateArm(ARM_SPEED);
         sleep(1000);
         GGRobot.RotateArm(0.0);
@@ -124,17 +127,16 @@ public abstract class NS_OpMode_Autonomous extends LinearOpMode {
 
     private void dropGlyph() {
         GGRobot.ResetGlyphClaw();
-        while (opModeIsActive() && GGRobot.IsClawActuating()) {
-            sleep(50);
-            idle();
-        }
+        sleep(100);
     }
 
     public void KnockJewel (Jewel jewel) {
         double turnAngle = 10;
 
-        GGRobot.positionJewelArm(0.45);
-        sleep(1000); // Instead, we should check for actuation
+        GGRobot.SwitchLightState(true);
+
+        GGRobot.positionJewelArm(0.50);
+        sleep(500); // Instead, we should check for actuation
 
         if ((GGRobot.isJewelRed() && jewel == Jewel.RED)
             || (!GGRobot.isJewelRed() && jewel == Jewel.BLUE))
@@ -148,8 +150,10 @@ public abstract class NS_OpMode_Autonomous extends LinearOpMode {
             idle();
         }
 
-        GGRobot.positionJewelArm(Servo.MAX_POSITION);
-        sleep(1000);
+        GGRobot.SwitchLightState(false);
+
+        GGRobot.positionJewelArm(1.0);
+        sleep(500);
 
         gyroTurn(TURN_SPEED, -turnAngle);
         while (!isStopRequested() && GGRobot.IsBusy())  {
