@@ -12,11 +12,10 @@ public class NS_OpMode_Autonomous_R2 extends NS_OpMode_Autonomous {
     public void DriveAutonomous() {
         if (opModeIsActive()) KnockJewel(Jewel.BLUE);
 
-        if (opModeIsActive()) gyroDrive(DRIVE_SPEED, -24, 0.0);
-        if (opModeIsActive()) gyroDrive(DRIVE_SPEED, 2, 0.0);
-        if (opModeIsActive()) gyroTurn(TURN_SPEED, 137.0);
-        if (opModeIsActive()) gyroDrive(DRIVE_SPEED, -13.2, 0.0);
-        if (opModeIsActive()) gyroTurn(TURN_SPEED, 194.0);
-        if (opModeIsActive()) gyroDrive(DRIVE_SPEED, 6.5, 0.0);
+        if (opModeIsActive()) gyroDrive(DRIVE_SPEED, -30, 0.0);
+        if (opModeIsActive()) gyroTurn(TURN_SPEED, 90.0);
+        if (opModeIsActive()) gyroDrive(DRIVE_SPEED, -26, 0.0);
+        if (opModeIsActive()) gyroTurn(TURN_SPEED, 149);
+        if (opModeIsActive()) gyroDrive(DRIVE_SPEED, 11.3, 0.0);
     }
 }
