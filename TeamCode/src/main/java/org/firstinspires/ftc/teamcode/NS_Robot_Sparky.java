@@ -17,13 +17,20 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
     private final double cargoLiftTopPosition = 280; //279.4; //mm, 11 inches
     private final double cargoLift100 = 100;
     private final double cargoLift200 = 200;
-    private final double cargoLiftForestallLimit = 4; //mm
+    private final double cargoLiftForestallLimit = 5; //mm
     private final double cargoLiftLowPosition = cargoLiftBottomPosition + cargoLiftForestallLimit;
     private final double cargoLiftHighPosition = cargoLiftTopPosition - cargoLiftForestallLimit;
     final int encoderPulsesLowPosition = (int) (encoderPulsesPerMilimeter * cargoLiftLowPosition);
     final int encoderPulsesHighPosition = (int) (encoderPulsesPerMilimeter * cargoLiftHighPosition);
     final int encoderPulses100 = (int) (encoderPulsesPerMilimeter * cargoLift100);
     final int encoderPulses200 = (int) (encoderPulsesPerMilimeter * cargoLift200);
+
+    public final int bucketElevationUpPosition = (int) (encoderTotalPulses * 1.65);
+    public final int bucketElevationDownPosition = 0;
+
+    public final int mineralCollectionElevatorUpPosition = 0;
+    public final int mineralCollectionElevatorDownPosition = (int) (encoderTotalPulses * 0.6);
+
 
     //DriveTrain Motors
     private DcMotor treadLeftMotor = null;
@@ -56,6 +63,7 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
         bucketElevationMotor = hardwareMap.dcMotor.get("bucketElevationMotor");
 
         mineralCollectionElevationMotor = hardwareMap.dcMotor.get("mineralCollectionElevationMotor");
+        mineralCollectionElevationMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         mineralCollectionMotor = hardwareMap.dcMotor.get("mineralCollectionMotor");
     }
 
@@ -63,15 +71,20 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
     public void Initialization() {
         CreateHardwareMap();
         latchRotationMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        cargoLiftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+
+        mineralCollectionElevationMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        //mineralCollectionElevationMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //mineralCollectionElevationMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
     public void Start() {
         // Set the cargo lift to starting position
-        cargoLiftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         SetCargoLiftPositionByEncoder(encoderPulsesLowPosition,0.25);
 
         // When The Motor Recieves No Power, It Will Resist Any Outside Forces Placed Upon It
-        mineralCollectionElevationMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
     public void Stop() {
@@ -113,6 +126,14 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
         bucketElevationMotor.setPower(bucketElevationPower);
         bucketElevationMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
+    public void SetBucketLiftPositionByEncoder(int encoderTargetPosition, double liftSpeed) {
+        // Set Target and Turn On RUN_TO_POSITION
+        bucketElevationMotor.setTargetPosition(encoderTargetPosition);
+        bucketElevationMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        //cargoLiftpower = Range.clip(Math.abs(liftPower), 0.0, 1.0);
+        cargoLiftMotor.setPower(liftSpeed);
+    }
 
     public void ElevateCollector(double elevationPower) {
         elevationPower = com.qualcomm.robotcore.util.Range.clip(elevationPower, -1.0, 1.0);
@@ -121,6 +142,15 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
         }
         mineralCollectionElevationMotor.setPower(elevationPower);
         mineralCollectionElevationMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+    }
+
+    public void SetElevatorCollectioPositionByEncoder(int ElevatorCollectioPosition, double liftSpeed) {
+        // Set Target and Turn On RUN_TO_POSITION
+        mineralCollectionElevationMotor.setTargetPosition(ElevatorCollectioPosition);
+        mineralCollectionElevationMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        //cargoLiftpower = Range.clip(Math.abs(liftPower), 0.0, 1.0);
+        cargoLiftMotor.setPower(liftSpeed);
     }
 
     public void RotateCollector(double collectionPower) {

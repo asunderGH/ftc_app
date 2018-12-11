@@ -40,10 +40,10 @@ public class NS_Sparky_Manual extends NS_Robot_Sparky {
             }
 
             if (gamepad1.x == true) {
-                latchRegulator = PowerRegulator.ONETHIRD;
+                latchRegulator = PowerRegulator.THREEFOURTH;
             }
             else if (gamepad1.y == true) {
-                latchRegulator = PowerRegulator.THREEFOURTH;
+                latchRegulator = PowerRegulator.FULL;
             }
 
 
@@ -65,12 +65,12 @@ public class NS_Sparky_Manual extends NS_Robot_Sparky {
 
 
             //Regulating Speed For The Bucket Elevation Motor
-            if (gamepad2.dpad_up == true) {
+            /*if (gamepad2.dpad_up == true) {
                 cargoLiftRegulator = PowerRegulator.HALF;
             }
             else if (gamepad2.dpad_down == true) {
                 cargoLiftRegulator = PowerRegulator.FOURTH;
-            }
+            }*/
 
             //if (gamepad1.right_trigger > 0.5)
             LatchArmPower(gamepad1.right_trigger); // * latchRegulator);
@@ -79,10 +79,10 @@ public class NS_Sparky_Manual extends NS_Robot_Sparky {
 
 
             //Makeing Cargo Lift Move To Preprogrammed Positions
-            if (gamepad2.right_bumper == true) {
+            if (gamepad2.dpad_up == true) {
                 SetCargoLiftPositionByEncoder(encoderPulsesHighPosition, cargoLiftRegulator);
             }
-            else if(gamepad2.left_bumper == true) {
+            else if(gamepad2.dpad_down == true) {
                 SetCargoLiftPositionByEncoder(encoderPulsesLowPosition, cargoLiftRegulator);
             }
 
@@ -96,10 +96,22 @@ public class NS_Sparky_Manual extends NS_Robot_Sparky {
             // Moving The Bucket Up Or Down
             double bucketElevationPower = -gamepad2.left_stick_y;
             BucketElevation(bucketElevationPower * bucketRegulator);
+            /*if (gamepad2.dpad_right == true) {
+                SetBucketLiftPositionByEncoder(bucketElevationUpPosition, bucketRegulator);
+            }
+            else if (gamepad2.dpad_left == true) {
+                SetBucketLiftPositionByEncoder(bucketElevationDownPosition, bucketRegulator);
+            }*/
 
             // Moving The Collector Up Or Down
-            double collectorElevationPower = gamepad2.right_stick_y;
+            double collectorElevationPower = -gamepad2.right_stick_y;
             ElevateCollector(collectorElevationPower * collectorRegulator);
+            /*if (gamepad2.right_bumper == true) {
+                SetElevatorCollectioPositionByEncoder(mineralCollectionElevatorUpPosition, collectorRegulator);
+            }
+            else if (gamepad2.left_bumper == true) {
+                SetElevatorCollectioPositionByEncoder(mineralCollectionElevatorDownPosition, collectorRegulator);
+            }*/
 
             //if (gamepad2.right_trigger > 0.1) {
                 RotateCollector(gamepad2.right_trigger);
