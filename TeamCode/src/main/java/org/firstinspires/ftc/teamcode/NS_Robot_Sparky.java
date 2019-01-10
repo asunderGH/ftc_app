@@ -1,40 +1,44 @@
 package org.firstinspires.ftc.teamcode;
 
-import android.util.Range;
-
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.Range;
 
 public abstract class NS_Robot_Sparky extends LinearOpMode {
     // Encoder Calculations
     private final double encoderTotalPulses = 1440;
-    private final double ratioMotorToPinion = 2;
     private final double pinionCircumference = 19.085 * Math.PI;
-    private final double encoderPulsesPerMilimeter = encoderTotalPulses * ratioMotorToPinion / pinionCircumference;
+
+    private final double cargoLiftMotorToPinionRatio = 2;
+    private final double encoderPulsesPerMilimeter = encoderTotalPulses * cargoLiftMotorToPinionRatio / pinionCircumference;
     private final double cargoLiftBottomPosition = 0.0; //mm
-    private final double cargoLiftTopPosition = 280; //279.4; //mm, 11 inches
-    private final double cargoLift100 = 100;
-    private final double cargoLift200 = 200;
-    private final double cargoLiftForestallLimit = 5; //mm
+    private final double cargoLiftTopPosition = 170; //mm, 6.7 inches
+    private final double cargoLiftForestallLimit = 2; //mm
     private final double cargoLiftLowPosition = cargoLiftBottomPosition + cargoLiftForestallLimit;
     private final double cargoLiftHighPosition = cargoLiftTopPosition - cargoLiftForestallLimit;
-    final int encoderPulsesLowPosition = (int) (encoderPulsesPerMilimeter * cargoLiftLowPosition);
-    final int encoderPulsesHighPosition = (int) (encoderPulsesPerMilimeter * cargoLiftHighPosition);
-    final int encoderPulses100 = (int) (encoderPulsesPerMilimeter * cargoLift100);
-    final int encoderPulses200 = (int) (encoderPulsesPerMilimeter * cargoLift200);
+    public final int encoderPulsesLowPosition = (int) (encoderPulsesPerMilimeter * cargoLiftLowPosition);
+    public final int encoderPulsesHighPosition = (int) (encoderPulsesPerMilimeter * cargoLiftHighPosition);
 
-    public final int bucketElevationUpPosition = (int) (encoderTotalPulses * 1.65);
-    public final int bucketElevationDownPosition = 0;
+    private final double bucketElevationMotorToGearRatio = 2;
+    private final double bucketElevationGearRotationsForCrater = 0.125; //45 Degrees from rest position
+    private final double bucketElevationGearRotationsForDumping = 0.65;
+    public final int bucketElevationRestPosition = 0;
+    public final int bucketElevationCraterPosition =
+            (int) (encoderTotalPulses * (bucketElevationMotorToGearRatio * bucketElevationGearRotationsForCrater));
+    public final int bucketElevationDumpPosition =
+            (int) (encoderTotalPulses * (bucketElevationGearRotationsForDumping * bucketElevationMotorToGearRatio));
 
     public final int mineralCollectionElevatorUpPosition = 0;
     public final int mineralCollectionElevatorDownPosition = (int) (encoderTotalPulses * 0.6);
 
 
     //DriveTrain Motors
-    private DcMotor treadLeftMotor = null;
-    private DcMotor treadRightMotor = null;
+    private DcMotor frontRightMotor = null;
+    private DcMotor frontLeftMotor = null;
+    private DcMotor backRightMotor = null;
+    private DcMotor backLeftMotor = null;
 
     //Cargo Lift Motor
     private DcMotor cargoLiftMotor = null;
@@ -51,31 +55,34 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
     private DcMotor mineralCollectionElevationMotor = null;
 
     public void CreateHardwareMap() {
-        latchRotationMotor = hardwareMap.dcMotor.get("latchRotationMotor");
+        //latchRotationMotor = hardwareMap.dcMotor.get("latchRotationMotor");
         //latchHookServo = hardwareMap.servo.get("latchHookServo");
 
-        treadLeftMotor = hardwareMap.dcMotor.get("treadLeftMotor");
-        treadRightMotor = hardwareMap.dcMotor.get("treadRightMotor");
-        treadRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontRightMotor = hardwareMap.dcMotor.get("frontRightMotor");
+        frontLeftMotor = hardwareMap.dcMotor.get("frontLeftMotor");
+        backRightMotor = hardwareMap.dcMotor.get("backRightMotor");
+        backLeftMotor = hardwareMap.dcMotor.get("backLeftMotor");
+        frontRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        backRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         cargoLiftMotor = hardwareMap.dcMotor.get("cargoLiftMotor");
 
         bucketElevationMotor = hardwareMap.dcMotor.get("bucketElevationMotor");
 
-        mineralCollectionElevationMotor = hardwareMap.dcMotor.get("mineralCollectionElevationMotor");
-        mineralCollectionElevationMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        //mineralCollectionElevationMotor = hardwareMap.dcMotor.get("mineralCollectionElevationMotor");
+        //mineralCollectionElevationMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         mineralCollectionMotor = hardwareMap.dcMotor.get("mineralCollectionMotor");
     }
 
-    //Initialization Method
-    public void Initialization() {
+    //Initialze_Sparky Method
+    public void Initialze_Sparky() {
         CreateHardwareMap();
-        latchRotationMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        //latchRotationMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         cargoLiftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
 
-        mineralCollectionElevationMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        //mineralCollectionElevationMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         //mineralCollectionElevationMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         //mineralCollectionElevationMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
@@ -90,7 +97,7 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
     public void Stop() {
         SetCargoLiftPositionByEncoder(0, 0.25);
 
-        mineralCollectionElevationMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+       // mineralCollectionElevationMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
     }
 
     public void LatchArmPower(double latchMotorPower) {
@@ -102,14 +109,22 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
     }
 
     //Driving Method
-    public void RCDrive(double leftPower, double rightPower) {
-        double max = Math.max(Math.abs(leftPower), Math.abs(rightPower));
+    public void RCDrive(double leftSideMotorPower, double rightSideMotorPower) {
+        double max = Math.max(Math.abs(leftSideMotorPower), Math.abs(rightSideMotorPower));
         if (max > 1.0) {
-            leftPower /= max;
-            rightPower /= max;
+            leftSideMotorPower /= max;
+            rightSideMotorPower /= max;
         }
-        treadLeftMotor.setPower(leftPower);
-        treadRightMotor.setPower(rightPower);
+
+        frontRightMotor.setPower(rightSideMotorPower);
+        frontLeftMotor.setPower(leftSideMotorPower);
+        backRightMotor.setPower(rightSideMotorPower);
+        backLeftMotor.setPower(leftSideMotorPower);
+    }
+
+    public void ElevateCargoLift(double cargoLiftPower) {
+        cargoLiftPower = Range.clip(cargoLiftPower, -1.0, 1.0);
+        cargoLiftMotor.setPower(cargoLiftPower);
     }
 
     public void SetCargoLiftPositionByEncoder(int encoderTargetPosition, double liftSpeed) {
@@ -121,12 +136,13 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
         cargoLiftMotor.setPower(liftSpeed);
     }
 
-    public void BucketElevation(double bucketElevationPower) {
-        bucketElevationPower = com.qualcomm.robotcore.util.Range.clip(bucketElevationPower, -1.0, 1.0);
-        bucketElevationMotor.setPower(bucketElevationPower);
-        bucketElevationMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+    public void ElevateCargoBucket(double cargoBucketLiftPower) {
+        cargoBucketLiftPower = Range.clip(cargoBucketLiftPower, -1.0, 1.0);
+        bucketElevationMotor.setPower(cargoBucketLiftPower);
     }
-    public void SetBucketLiftPositionByEncoder(int encoderTargetPosition, double liftSpeed) {
+
+    public void SetCargoBucketPositionByEncoder(int encoderTargetPosition, double liftSpeed) {
         // Set Target and Turn On RUN_TO_POSITION
         bucketElevationMotor.setTargetPosition(encoderTargetPosition);
         bucketElevationMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -135,26 +151,8 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
         cargoLiftMotor.setPower(liftSpeed);
     }
 
-    public void ElevateCollector(double elevationPower) {
-        elevationPower = com.qualcomm.robotcore.util.Range.clip(elevationPower, -1.0, 1.0);
-        if (Math.abs(elevationPower) < 0.05) {
-            elevationPower = 0;
-        }
-        mineralCollectionElevationMotor.setPower(elevationPower);
-        mineralCollectionElevationMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-    }
-
-    public void SetElevatorCollectioPositionByEncoder(int ElevatorCollectioPosition, double liftSpeed) {
-        // Set Target and Turn On RUN_TO_POSITION
-        mineralCollectionElevationMotor.setTargetPosition(ElevatorCollectioPosition);
-        mineralCollectionElevationMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        //cargoLiftpower = Range.clip(Math.abs(liftPower), 0.0, 1.0);
-        cargoLiftMotor.setPower(liftSpeed);
-    }
-
-    public void RotateCollector(double collectionPower) {
-        collectionPower = com.qualcomm.robotcore.util.Range.clip(collectionPower, -1.0, 1.0);
+    public void RotateMineralCollector(double collectionPower) {
+        collectionPower = Range.clip(collectionPower, -1.0, 1.0);
         if (Math.abs(collectionPower) < 0.1) {
             collectionPower = 0;
         }

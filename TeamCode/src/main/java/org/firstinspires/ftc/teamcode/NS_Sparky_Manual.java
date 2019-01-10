@@ -3,28 +3,27 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
 
-@TeleOp(name = "Sparky Cargo Hold Test", group = "Tests")
+@TeleOp(name = "Sparky Manual Mode", group = "Competition")
+
 public class NS_Sparky_Manual extends NS_Robot_Sparky {
     private final class PowerRegulator {
         static final double FULL = 1.0;
         static final double THREEFOURTH = 0.75;
         static final double HALF = 0.5;
-        static final double ONETHIRD = 1/3;
+        static final double ONETHIRD = 1.0/3.0;
         static final double FOURTH = 0.25;
         static final double TENTH = 0.10;
     }
 
-    double latchRegulator = PowerRegulator.ONETHIRD;
+    double driveRegulator = PowerRegulator.FULL;
     double cargoLiftRegulator = PowerRegulator.FULL;
-    double bucketRegulator = PowerRegulator.HALF;
+    double bucketElevationRegulator = PowerRegulator.HALF;
     double collectorRegulator = PowerRegulator.HALF;
-    double driveRegulator = PowerRegulator.ONETHIRD;
-
 
 
     @Override
     public void runOpMode() throws InterruptedException {
-        Initialization();
+        Initialze_Sparky();
 
         waitForStart();
 
@@ -32,93 +31,59 @@ public class NS_Sparky_Manual extends NS_Robot_Sparky {
 
         while (opModeIsActive()) {
 
-            if (gamepad1.a == true) {
-                driveRegulator = PowerRegulator.HALF;
-            }
-            else if (gamepad1.b == true) {
-                driveRegulator = PowerRegulator.FULL;
-            }
-
-            if (gamepad1.x == true) {
-                latchRegulator = PowerRegulator.THREEFOURTH;
-            }
-            else if (gamepad1.y == true) {
-                latchRegulator = PowerRegulator.FULL;
-            }
-
-
-            //Regulating Speed For The Collection Elevation Motor
-            if (gamepad2.a == true) {
-                collectorRegulator = PowerRegulator.FOURTH;
-            }
-            else if (gamepad2.b == true) {
-                collectorRegulator = PowerRegulator.HALF;
-            }
-
+            /* Configure the regulation for all motoros */
+            if (gamepad1.a == true) driveRegulator = PowerRegulator.HALF;
+            if (gamepad1.b == true) driveRegulator = PowerRegulator.FULL;
             //Regulating Speed For Cargo Lift
-            if (gamepad2.x == true) {
-                bucketRegulator = PowerRegulator.FOURTH;
-            }
-            else if (gamepad2.y == true) {
-                bucketRegulator = PowerRegulator.HALF;
-            }
+            if (gamepad1.x == true) bucketElevationRegulator = PowerRegulator.HALF;
+            if (gamepad1.y == true) bucketElevationRegulator = PowerRegulator.THREEFOURTH;
 
 
-            //Regulating Speed For The Bucket Elevation Motor
-            /*if (gamepad2.dpad_up == true) {
-                cargoLiftRegulator = PowerRegulator.HALF;
-            }
-            else if (gamepad2.dpad_down == true) {
-                cargoLiftRegulator = PowerRegulator.FOURTH;
-            }*/
-
-            //if (gamepad1.right_trigger > 0.5)
-            LatchArmPower(gamepad1.right_trigger); // * latchRegulator);
-            //else if (gamepad1.left_trigger > 0.5) {
-            LatchArmPower(-gamepad1.left_trigger); // * latchRegulator);
-
-
-            //Makeing Cargo Lift Move To Preprogrammed Positions
-            if (gamepad2.dpad_up == true) {
-                SetCargoLiftPositionByEncoder(encoderPulsesHighPosition, cargoLiftRegulator);
-            }
-            else if(gamepad2.dpad_down == true) {
-                SetCargoLiftPositionByEncoder(encoderPulsesLowPosition, cargoLiftRegulator);
-            }
-
-            //Driving
+            /* Program Driving Per User Input */
             double drive = gamepad1.left_stick_y;
             double turn = -gamepad1.right_stick_x;
             double rightMotorPower = Range.clip(drive-turn, -1.0, 1.0);
             double leftMotorPower = Range.clip(drive+turn, -1.0, 1.0);
             RCDrive(leftMotorPower * driveRegulator, rightMotorPower * driveRegulator);
 
-            // Moving The Bucket Up Or Down
-            double bucketElevationPower = -gamepad2.left_stick_y;
-            BucketElevation(bucketElevationPower * bucketRegulator);
-            /*if (gamepad2.dpad_right == true) {
-                SetBucketLiftPositionByEncoder(bucketElevationUpPosition, bucketRegulator);
+            /* Cargo Lift Actuation */
+            // TBD: Revisit this code after setting up limits for user control
+            boolean cargoLiftUserOperation = false;
+            if (cargoLiftUserOperation == true)
+            {
+                //Raising The Cargo Lift
+                double cargoLiftPower = gamepad2.left_stick_y;
+                ElevateCargoLift(cargoLiftPower);
             }
-            else if (gamepad2.dpad_left == true) {
-                SetBucketLiftPositionByEncoder(bucketElevationDownPosition, bucketRegulator);
-            }*/
-
-            // Moving The Collector Up Or Down
-            double collectorElevationPower = -gamepad2.right_stick_y;
-            ElevateCollector(collectorElevationPower * collectorRegulator);
-            /*if (gamepad2.right_bumper == true) {
-                SetElevatorCollectioPositionByEncoder(mineralCollectionElevatorUpPosition, collectorRegulator);
+            else
+            {
+                /* Move Cargo Lift To Preprogrammed Positions */
+                if (gamepad2.dpad_up == true) {
+                    SetCargoLiftPositionByEncoder(encoderPulsesHighPosition, cargoLiftRegulator);
+                }
+                else if(gamepad2.dpad_down == true) {
+                    SetCargoLiftPositionByEncoder(encoderPulsesLowPosition, cargoLiftRegulator);
+                }
             }
-            else if (gamepad2.left_bumper == true) {
-                SetElevatorCollectioPositionByEncoder(mineralCollectionElevatorDownPosition, collectorRegulator);
-            }*/
 
-            //if (gamepad2.right_trigger > 0.1) {
-                RotateCollector(gamepad2.right_trigger);
 
-            //else if (gamepad2.left_trigger > 0.1) {
-                RotateCollector(-gamepad2.left_trigger);
+            /* Bucket Elevation Control */
+            double bucketLiftPower = gamepad2.right_stick_y;
+            ElevateCargoBucket(bucketLiftPower * bucketElevationRegulator);
+            if (gamepad2.a == true) SetCargoBucketPositionByEncoder(bucketElevationRestPosition, bucketElevationRegulator);
+            if (gamepad2.b == true || gamepad2.x == true)
+                SetCargoBucketPositionByEncoder(bucketElevationCraterPosition, bucketElevationRegulator);
+            if (gamepad2.y == true) SetCargoBucketPositionByEncoder(bucketElevationDumpPosition, bucketElevationRegulator);
 
+            if (gamepad2.right_trigger > 0.1) {
+                RotateMineralCollector(gamepad2.right_trigger);
+            }
+            else if (gamepad2.left_trigger > 0.1) {
+                RotateMineralCollector(-gamepad2.left_trigger);
+            }
+            else {
+                RotateMineralCollector(0);
+            }
 
         }
 
