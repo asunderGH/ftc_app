@@ -11,13 +11,13 @@ public class NS_Sparky_Manual extends NS_Robot_Sparky {
         static final double THREEFOURTH = 0.75;
         static final double HALF = 0.5;
         static final double ONETHIRD = 1.0/3.0;
-        static final double FOURTH = 0.25;
+        static final double ONEFOURTH = 0.25;
         static final double TENTH = 0.10;
     }
 
     double driveRegulator = PowerRegulator.FULL;
     double cargoLiftRegulator = PowerRegulator.FULL;
-    double bucketElevationRegulator = PowerRegulator.HALF;
+    double bucketElevationRegulator = PowerRegulator.ONEFOURTH;
     double collectorRegulator = PowerRegulator.HALF;
 
 
@@ -27,16 +27,17 @@ public class NS_Sparky_Manual extends NS_Robot_Sparky {
 
         waitForStart();
 
-        Start();
+        Start_Sparky();
+        WaitForSparky();
 
         while (opModeIsActive()) {
 
-            /* Configure the regulation for all motoros */
+            /* Configure the regulation for all motors */
             if (gamepad1.a == true) driveRegulator = PowerRegulator.HALF;
             if (gamepad1.b == true) driveRegulator = PowerRegulator.FULL;
             //Regulating Speed For Cargo Lift
-            if (gamepad1.x == true) bucketElevationRegulator = PowerRegulator.HALF;
-            if (gamepad1.y == true) bucketElevationRegulator = PowerRegulator.THREEFOURTH;
+            if (gamepad1.x == true) bucketElevationRegulator = PowerRegulator.ONEFOURTH;
+            if (gamepad1.y == true) bucketElevationRegulator = PowerRegulator.ONETHIRD;
 
 
             /* Program Driving Per User Input */
@@ -64,16 +65,35 @@ public class NS_Sparky_Manual extends NS_Robot_Sparky {
                 else if(gamepad2.dpad_down == true) {
                     SetCargoLiftPositionByEncoder(encoderPulsesLowPosition, cargoLiftRegulator);
                 }
+                else if(gamepad2.dpad_left == true) {
+                    SetCargoLiftPositionByEncoder(encoderPulsesOneThirdPosition, cargoLiftRegulator);
+                }
+                else if(gamepad2.dpad_right == true) {
+                    SetCargoLiftPositionByEncoder(encoderPulsesTwoThirdsPosition, cargoLiftRegulator);
+                }
             }
 
 
             /* Bucket Elevation Control */
-            double bucketLiftPower = gamepad2.right_stick_y;
-            ElevateCargoBucket(bucketLiftPower * bucketElevationRegulator);
-            if (gamepad2.a == true) SetCargoBucketPositionByEncoder(bucketElevationRestPosition, bucketElevationRegulator);
-            if (gamepad2.b == true || gamepad2.x == true)
-                SetCargoBucketPositionByEncoder(bucketElevationCraterPosition, bucketElevationRegulator);
-            if (gamepad2.y == true) SetCargoBucketPositionByEncoder(bucketElevationDumpPosition, bucketElevationRegulator);
+            boolean bucketLiftUserOperation = false;
+            if (bucketLiftUserOperation == true) {
+                double bucketLiftPower = gamepad2.right_stick_y;
+                ElevateCargoBucket(bucketLiftPower * bucketElevationRegulator);
+            }
+            else {
+                if (gamepad2.a == true) {
+                    SetCargoBucketPositionByEncoder(bucketElevationRestPosition, bucketElevationRegulator);
+                }
+                else if (gamepad2.b == true) {
+                    SetCargoBucketPositionByEncoder(bucketElevationCraterPosition, bucketElevationRegulator);
+                }
+                else if (gamepad2.x == true) {
+                    SetCargoBucketPositionByEncoder(bucketElevationTransportPosition, bucketElevationRegulator);
+                }
+                else if (gamepad2.y == true) {
+                    SetCargoBucketPositionByEncoder(bucketElevationDumpPosition, bucketElevationRegulator);
+                }
+            }
 
             if (gamepad2.right_trigger > 0.1) {
                 RotateMineralCollector(gamepad2.right_trigger);
@@ -87,7 +107,7 @@ public class NS_Sparky_Manual extends NS_Robot_Sparky {
 
         }
 
-        Stop();
+        Stop_Sparky();
         wait(1000);
 
     }
