@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
-import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -10,7 +9,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
@@ -19,6 +17,21 @@ import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 
 public abstract class NS_Robot_Sparky extends LinearOpMode {
+    //DriveTrain Motors
+    private DcMotor frontRightMotor = null;
+    private DcMotor frontLeftMotor = null;
+    private DcMotor backRightMotor = null;
+    private DcMotor backLeftMotor = null;
+    //Cargo Lift Motor
+    private DcMotor cargoLiftMotor = null;
+    //Mineral Transporting Motor and Servos
+    private DcMotor bucketElevationMotor = null;
+    //Mineral Collection Motor
+    private DcMotor mineralCollectionMotor = null;
+
+    private double drivePower = 0.0;
+    private double driveDistance = 0.0;
+
     // Encoder Calculations
     private final double encoderTotalPulses = 1440;
     private final double pinionCircumference = 19.085 * Math.PI;
@@ -27,18 +40,20 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
     private final double encoderPulsesPerMilimeter = encoderTotalPulses * cargoLiftMotorToPinionRatio / pinionCircumference;
     private final double cargoLiftBottomPosition = 0.0; //mm
     private final double cargoLiftTopPosition = 170; //mm, 6.7 inches
-    private final double cargoLiftForestallLimit = 0; //2; //mm
-    private final double cargoLiftLowPosition = cargoLiftBottomPosition + cargoLiftForestallLimit;
-    private final double cargoLiftHighPosition = -cargoLiftTopPosition - cargoLiftForestallLimit;
-    public final int encoderPulsesLowPosition = (int) (encoderPulsesPerMilimeter * cargoLiftLowPosition);
-    public final int encoderPulsesHighPosition = (int) (encoderPulsesPerMilimeter * cargoLiftHighPosition);
-    public final int encoderPulsesOneThirdPosition = encoderPulsesHighPosition / 3;
-    public final int encoderPulsesTwoThirdsPosition = encoderPulsesHighPosition * 2 / 3;
+    private final double cargoLiftThresholdLimit = 2; //mm
+    private final double cargoLiftLowPosition = cargoLiftBottomPosition; // + cargoLiftThresholdLimit;
+    private final double cargoLiftHighPosition = cargoLiftTopPosition; // - cargoLiftThresholdLimit;
+    public final int cargoLiftEncoderPulsesLowPosition = (int) (encoderPulsesPerMilimeter * cargoLiftLowPosition);
+    public final int cargoLiftEncoderPulsesHighPosition = (int) (encoderPulsesPerMilimeter * cargoLiftHighPosition);
+    public final int cargoLiftEncoderPulsesThresholdLimit = (int) (encoderPulsesPerMilimeter * cargoLiftThresholdLimit);
+    public final int cargoLiftEncoderPulsesOneThirdPosition = cargoLiftEncoderPulsesHighPosition / 3;
+    public final int cargoLiftEncoderPulsesTwoThirdsPosition = cargoLiftEncoderPulsesHighPosition * 2 / 3;
 
     private final double bucketElevationMotorToGearRatio = 2;
     private final double bucketElevationGearRotationsForCrater = 45.0 / 360.0; //45 Degrees from rest position
     private final double bucketElevationGearRotationsForTransport = 140.0 / 360.0;
     private final double bucketElevationGearRotationsForDumping = 190.0 / 360.0;
+    private final double bucketElevationThresholdLimit = 3.0 / 360.0;
     public final int bucketElevationRestPosition = 5;
     public final int bucketElevationCraterPosition =
             (int) (encoderTotalPulses * bucketElevationMotorToGearRatio * bucketElevationGearRotationsForCrater);
@@ -46,6 +61,10 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
             (int) (encoderTotalPulses * bucketElevationMotorToGearRatio * bucketElevationGearRotationsForTransport);
     public final int bucketElevationDumpPosition =
             (int) (encoderTotalPulses * bucketElevationGearRotationsForDumping * bucketElevationMotorToGearRatio);
+    public final int bucketElevationEncoderPulsesHighPosition = (int) ( encoderPulsesPerMilimeter* bucketElevationDumpPosition);
+    public final int bucketElevationEncoderPulsesLowPosition = (int) (encoderPulsesPerMilimeter* bucketElevationRestPosition);
+    public final int bucketElevationEncoderPulsesThresholdLimit = (int) (encoderTotalPulses * bucketElevationThresholdLimit);
+
 
     public final int mineralCollectionElevatorUpPosition = 0;
     public final int mineralCollectionElevatorDownPosition = (int) (encoderTotalPulses * 0.6);
@@ -57,33 +76,10 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
             / wheelCircumference;
 
 
-
-    //DriveTrain Motors
-    private DcMotor frontRightMotor = null;
-    private DcMotor frontLeftMotor = null;
-    private DcMotor backRightMotor = null;
-    private DcMotor backLeftMotor = null;
-
-    //Cargo Lift Motor
-    private DcMotor cargoLiftMotor = null;
-    //Mineral Transporting Motor and Servos
-    private DcMotor bucketElevationMotor = null;
-
-    //Lander Latch Motor and Servo
-    private DcMotor latchRotationMotor = null;
-
-    private Servo latchHookServo = null;
-
-    //Mineral Collection Motor
-    private DcMotor mineralCollectionMotor = null;
-    private DcMotor mineralCollectionElevationMotor = null;
-
     // The IMU sensor object
     private BNO055IMU imu = null;
     private final int imuPollInterval = 50; // In milliseconds
 
-    private double drivePower = 0.0;
-    private double driveDistance = 0.0;
 
 
     // These constants define the desired driving/control characteristics
@@ -105,8 +101,8 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
         frontLeftMotor = hardwareMap.dcMotor.get("frontLeftMotor");
         backRightMotor = hardwareMap.dcMotor.get("backRightMotor");
         backLeftMotor = hardwareMap.dcMotor.get("backLeftMotor");
-        frontRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        backRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        backLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         cargoLiftMotor = hardwareMap.dcMotor.get("cargoLiftMotor");
 
@@ -235,7 +231,14 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
 
     public boolean IsBusy() {
         // return true if robot is idle
-        return (IsDriving());
+        return (IsDriving() || IsClimbing() || bucketElevationMotor.isBusy());
+    }
+
+    public void WaitWhileBusy() {
+        while (IsBusy()) {
+            sleep(50);
+            idle();
+        }
     }
 
     public void WaitForSparky() {
@@ -254,15 +257,28 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
             rightSideMotorPower /= max;
         }
 
-        frontRightMotor.setPower(rightSideMotorPower);
-        frontLeftMotor.setPower(leftSideMotorPower);
         backRightMotor.setPower(rightSideMotorPower);
         backLeftMotor.setPower(leftSideMotorPower);
+        frontRightMotor.setPower(rightSideMotorPower);
+        frontLeftMotor.setPower(leftSideMotorPower);
     }
 
     public void ElevateCargoLift(double cargoLiftPower) {
         cargoLiftPower = Range.clip(cargoLiftPower, -1.0, 1.0);
-        cargoLiftMotor.setPower(cargoLiftPower);
+        double currentCargoLiftEncoderPosition = cargoLiftMotor.getCurrentPosition();
+        if (cargoLiftPower > 0
+                && currentCargoLiftEncoderPosition < (cargoLiftEncoderPulsesHighPosition - cargoLiftEncoderPulsesThresholdLimit))
+        {
+            cargoLiftMotor.setPower(cargoLiftPower);
+        }
+        else if (cargoLiftPower < 0)
+                // && currentCargoLiftEncoderPosition > (cargoLiftEncoderPulsesLowPosition + cargoLiftEncoderPulsesThresholdLimit))
+        {
+            cargoLiftMotor.setPower(cargoLiftPower);
+        }
+        else {
+            cargoLiftMotor.setPower(0);
+        }
     }
 
     public void SetCargoLiftPositionByEncoder(int encoderTargetPosition, double liftSpeed) {
@@ -280,7 +296,23 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
 
     public void ElevateCargoBucket(double cargoBucketLiftPower) {
         cargoBucketLiftPower = Range.clip(cargoBucketLiftPower, -1.0, 1.0);
-        bucketElevationMotor.setPower(cargoBucketLiftPower);
+        double currentBucketElevationEncoderPosition = bucketElevationMotor.getCurrentPosition();
+
+        if (cargoBucketLiftPower > 0
+                && currentBucketElevationEncoderPosition < (bucketElevationEncoderPulsesHighPosition - bucketElevationEncoderPulsesThresholdLimit))
+        {
+            bucketElevationMotor.setPower(cargoBucketLiftPower);
+        }
+        else if (cargoBucketLiftPower < 0
+                && currentBucketElevationEncoderPosition > (bucketElevationEncoderPulsesLowPosition + bucketElevationEncoderPulsesThresholdLimit))
+        {
+            bucketElevationMotor.setPower(cargoBucketLiftPower);
+        }
+        else
+        {
+            bucketElevationMotor.setPower(0);
+        }
+
     }
 
     public void SetCargoBucketPositionByEncoder(int encoderTargetPosition, double liftSpeed) {
@@ -305,7 +337,10 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
 
 
 
-
+    public double GetCurrentAngle() {
+        Orientation currentAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        return (double) currentAngles.firstAngle;
+    }
 
     /**
      * angularError determines the error between the target angle and the robot's current heading
@@ -361,14 +396,16 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
          * position based on the drive angle and set them as position.
          */
         int moveCounts = (int) (distance * encoderPulsesPerInch);
-        int newRightTarget = backRightMotor.getCurrentPosition() + moveCounts;
-        int newLeftTarget = backLeftMotor.getCurrentPosition() + moveCounts;
+        int newFrontRightTarget = frontRightMotor.getCurrentPosition() + moveCounts;
+        int newFrontLeftTarget = frontLeftMotor.getCurrentPosition() + moveCounts;
+        int newBackRightTarget = backRightMotor.getCurrentPosition() + moveCounts;
+        int newBackLeftTarget = backLeftMotor.getCurrentPosition() + moveCounts;
 
         // Set Target and Turn On RUN_TO_POSITION
-        frontRightMotor.setTargetPosition(newRightTarget);
-        frontLeftMotor.setTargetPosition(newLeftTarget);
-        backRightMotor.setTargetPosition(newRightTarget);
-        backLeftMotor.setTargetPosition(newLeftTarget);
+        frontRightMotor.setTargetPosition(newFrontRightTarget);
+        frontLeftMotor.setTargetPosition(newFrontLeftTarget);
+        backRightMotor.setTargetPosition(newBackRightTarget);
+        backLeftMotor.setTargetPosition(newBackLeftTarget);
 
         frontRightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         frontLeftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -376,8 +413,8 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
         backLeftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // start motion.
-        telemetry.addData("Target",  "%7d:%7d",
-                newLeftTarget,  newRightTarget);
+        telemetry.addData("Target",  "FrontRight:%d, FrontLeft:%d, BackRight:%d, BackLeft:%d",
+                newFrontRightTarget, newFrontLeftTarget, newBackRightTarget, newBackLeftTarget);
         driveDistance = distance;
         drivePower = Range.clip(Math.abs(power), 0.0, 1.0);
         RCDrive(drivePower, drivePower);
@@ -440,8 +477,8 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
         } else {
             steer = angularSteer(error, turnCoeff);
             // Ensure that the right power direction is applied
-            leftPower = power * steer;
-            rightPower = -leftPower;
+            rightPower = power * steer;
+            leftPower = -rightPower;
         }
 
         // Send desired speeds to motors.
@@ -484,9 +521,12 @@ public abstract class NS_Robot_Sparky extends LinearOpMode {
             OnDriveDistance(distance, speed);
 
             // keep looping while we are still active, and BOTH motors are running.
+            /*
             while (opModeIsActive() && IsDriving()) {
                 OnDriveAngle(distance, angle, P_DRIVE_COEFF);
             }
+            */
+            WaitWhileBusy();
 
             // Stop all motion;
             ResetDriveMotors();
