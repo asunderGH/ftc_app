@@ -1,33 +1,48 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 @Autonomous(name = "Sparky Autonomous Depot", group = " Autonomous")
 public class NS_Sparky_Autonomous_Depot extends NS_Sparky_Autonomous {
     @Override
-    public void AutonomousPreProgrammedMode() throws InterruptedException {
-        AutonomousStart();
+    public void PreProgrammedPlay() throws InterruptedException {
+        GyroTurn(1.0, 45);
+        //WaitWhileDriving();
 
-        gyroTurn(NS_Sparky_Manual.PowerRegulator.ONEFOURTH, 0.0);
-        WaitForSparky();
+        GyroDrive(1.0, 45, 0.0);
+        //WaitWhileDriving();
 
-        // Disabled until there is a solution to reset an elevated bucket in the manual mode
-        //SetCargoBucketPositionByEncoder(bucketElevationCraterPosition, NS_Sparky_Manual.PowerRegulator.ONETENTH);
-        //WaitForSparky();
+        GyroTurn(1.0, -35);
+        //WaitWhileDriving();
 
-        gyroTurn(NS_Sparky_Manual.PowerRegulator.ONEFOURTH, GetCurrentAngle()-45);
-        WaitForSparky();
+        GyroDrive(1.0, 30, 0.0);
+        //WaitWhileDriving();
+
+        AutonomousDepotClaim();
+
+        GyroTurn(1.0, 115);
+        //WaitWhileDriving();
+
+        GyroDrive(1.0, 59, 0.0);
+        //WaitWhileDriving();
+
+        ActuateAutonomousServo(teamMarkerServoPositionCrater);
+
+        /*GyroTurn(NS_Sparky_Manual.PowerRegulator.ONEFOURTH, 0.0);
+        WaitWhileBusy();
+
+        GyroTurn(NS_Sparky_Manual.PowerRegulator.ONEFOURTH, GetCurrentAngle()-45);
+        WaitWhileBusy();
 
         //Needs Actual Distance To Be Measured
-        gyroDrive(NS_Sparky_Manual.PowerRegulator.FULL, 40, GetCurrentAngle());
-        WaitForSparky();
+        GyroDrive(NS_Sparky_Manual.PowerRegulator.FULL, 40, GetCurrentAngle());
+        WaitWhileBusy();
 
-        gyroTurn(NS_Sparky_Manual.PowerRegulator.ONEFOURTH, GetCurrentAngle()-90);
-        WaitForSparky();
+        GyroTurn(NS_Sparky_Manual.PowerRegulator.ONEFOURTH, GetCurrentAngle()-90);
+        WaitWhileBusy();
 
-        gyroDrive(NS_Sparky_Manual.PowerRegulator.FULL, 30, GetCurrentAngle());
-        WaitForSparky();
+        GyroDrive(NS_Sparky_Manual.PowerRegulator.FULL, 30, GetCurrentAngle());
+        WaitWhileBusy();*/
 
     }
 }

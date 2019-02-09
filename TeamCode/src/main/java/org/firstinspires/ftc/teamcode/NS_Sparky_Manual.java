@@ -12,6 +12,7 @@ public class NS_Sparky_Manual extends NS_Robot_Sparky {
         static final double ONEHALF = 0.5;
         static final double ONETHIRD = 1.0/3.0;
         static final double ONEFOURTH = 0.25;
+        static final double ONEFIFTH = 0.20;
         static final double ONETENTH = 0.10;
     }
 
@@ -20,15 +21,14 @@ public class NS_Sparky_Manual extends NS_Robot_Sparky {
     double bucketElevationRegulator = PowerRegulator.ONEFOURTH;
     double collectorRegulator = PowerRegulator.ONEHALF;
 
-
     @Override
     public void runOpMode() throws InterruptedException {
-        Initialze_Sparky();
+        SparkyInitialize();
 
         waitForStart();
 
-        Start_Sparky();
-        WaitForSparky();
+        SparkyStart();
+        WaitWhileBusy();
 
         while (opModeIsActive()) {
 
@@ -48,7 +48,14 @@ public class NS_Sparky_Manual extends NS_Robot_Sparky {
             double leftMotorPower = Range.clip(drive+turn, -1.0, 1.0);
             RCDrive(leftMotorPower * driveRegulator, rightMotorPower * driveRegulator);
 
-            /* Cargo Lift Actuation */
+            if (gamepad1.right_bumper == true) {
+                ActuateAutonomousServo(teamMarkerServoPositionDump);
+            }
+            else if (gamepad1.left_bumper == true) {
+                ActuateAutonomousServo(teamMarkerServoPositionRest);
+            }
+
+                        /* Cargo Lift Actuation */
             // TBD: Revisit this code after setting up limits for user control
             boolean cargoLiftBumperPressed = false;
             if (gamepad2.left_bumper == true)
@@ -123,7 +130,7 @@ public class NS_Sparky_Manual extends NS_Robot_Sparky {
 
         }
 
-        Stop_Sparky();
+        SparkyStop();
         wait(1000);
 
     }

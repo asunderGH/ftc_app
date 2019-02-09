@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.util.ElapsedTime;
+
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
@@ -23,7 +25,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 
 //@Autonomous (name = "Sparky Autonomous Mode", group = "Competition")
 public abstract class NS_Sparky_Autonomous extends NS_Robot_Sparky {
-    private double headingAngle = 20;
+    private double headingAngle = -40;
     private double sweepAngle = 50; // degrees
     private double deltaAngle = 5; // turn delta for camera sweep
     private double headingSpeed = NS_Sparky_Manual.PowerRegulator.ONEFOURTH;
@@ -51,14 +53,14 @@ public abstract class NS_Sparky_Autonomous extends NS_Robot_Sparky {
 
     // Select which camera you want use.  The FRONT camera is the one on the same side as the screen.
     // Valid choices are:  BACK or FRONT
-    private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
+    private VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
     private VuforiaTrackable lastTrackable = null;
     private OpenGLMatrix lastLocation = null;
     private boolean targetVisible = false;
 
     /* Variable to store our instance of the Vuforia localization engine.
      */
-    VuforiaLocalizer vuforia;
+    private VuforiaLocalizer vuforia;
     VuforiaTrackables targetsRoverRuckus;
     List<VuforiaTrackable> allTrackables;
 
@@ -79,23 +81,56 @@ public abstract class NS_Sparky_Autonomous extends NS_Robot_Sparky {
     MineralPosition goldPosition = MineralPosition.POS_NONE;
 
     // Abstract method to be implemented by autonomous modes
-    public abstract void AutonomousPreProgrammedMode() throws InterruptedException;
+    public abstract void PreProgrammedPlay() throws InterruptedException;
 
     @Override
     public void runOpMode() throws InterruptedException {
+        SparkyInitialize();
+        SparkyVuforiaInitialize();
+        SparkyTFODInitialize();
+        SparkyTFODActivate();
+        SparkyStart();
 
-        Initialze_Sparky();
-        //SparkyVuforiaInitialize();
-        //SparkyTFODInitialize();
-        /** Wait for the game to begin */
+        // Wait for the game to begin
         telemetry.addData(">", "Press Play to start tracking");
         telemetry.update();
         waitForStart();
 
-        Start_Sparky();
-        //SparkyTFODActivate();
-        WaitForSparky();
 
+        /*
+         * Turn so that camera faces the rightmost mineral
+         * Scan from right to left to locate the gold mineral
+         * If gold mineral is found, then
+         *      knock off gold mineral
+         *      go the same distance backwards
+         * End If
+         * Turn so that camera is facing towards the Vuforia target image
+         * Drive forward so that robot stops within a foot from Vuforia target
+         * If Vuforia target gets detected, then
+         *      Turn so that back of robot is facing the depot
+         *      Back up to depot
+         *      Dump team marker in depot
+         * Else
+         *      PreProgrammedPlay
+         * End If
+         * Extend color sensor arm
+         * Drive forward until color sensor senses the black crater rim
+         * Stop Robot
+         */
+        AutonomousStart();
+
+        //SetCargoBucketPositionByEncoder(bucketElevationRestPosition, NS_Sparky_Manual.PowerRegulator.ONEFOURTH );
+
+        SparkyTFODSampleMineral();
+        SparkyTFODShutdown();
+
+
+        AutonomousPlay();
+
+        //SparkyVuforiaActivate();
+        //SparkyVuforiaAcquire();
+
+        //SparkyVuforiaActivate();
 
         // Acquire position of target images
         //SparkyVuforiaAcquire();
@@ -107,7 +142,6 @@ public abstract class NS_Sparky_Autonomous extends NS_Robot_Sparky {
             move based on pre-programmed instructions
             which will need separate opmodes
          */
-        AutonomousPreProgrammedMode();
         /*
         if (targetVisible == true) {
             // Move based on calculations from Vuforia inputs
@@ -117,25 +151,39 @@ public abstract class NS_Sparky_Autonomous extends NS_Robot_Sparky {
         }
         */
 
-        Stop_Sparky();
+        SparkyStop();
     }
 
+
+    /******
+     * AUTONOMOUS
+     * @throws InterruptedException
+     */
     public void AutonomousStart() throws InterruptedException {
-        SetCargoLiftPositionByEncoder(cargoLiftEncoderPulsesHighPosition, liftSpeed);
-        WaitForSparky();
-
-        // Acquire the position of gold mineral
-        //SparkyTFODAcquire();
-
-        //SparkyVuforiaActivate();
-
-        gyroTurn(headingSpeed, headingAngle);
-        WaitForSparky();
-
-        SetCargoLiftPositionByEncoder(cargoLiftEncoderPulsesLowPosition, liftSpeed);
-        WaitForSparky();
+        SetCargoLiftPositionByEncoder(cargoLiftEncoderPulsesHighPosition, NS_Sparky_Manual.PowerRegulator.FULL);
+        WaitWhileBusy();
+        GyroTurn(NS_Sparky_Manual.PowerRegulator.ONEFIFTH, -20);
+        WaitWhileBusy();
+        SetCargoLiftPositionByEncoder(cargoLiftEncoderPulsesLowPosition, NS_Sparky_Manual.PowerRegulator.FULL);
+        // Following wait commented to reduce time
+        //WaitWhileBusy();
     }
 
+    public void AutonomousPlay() throws InterruptedException {
+        PreProgrammedPlay();
+    }
+
+    public void AutonomousDepotClaim() throws InterruptedException {
+        ActuateAutonomousServo(teamMarkerServoPositionDump);
+        sleep(800);
+        ActuateAutonomousServo(teamMarkerServoPositionRest);
+        sleep(800);
+    }
+
+
+    /******
+     * VUFORIA
+     */
     private void SparkyVuforiaInitialize() {
 
         /*
@@ -257,9 +305,9 @@ public abstract class NS_Sparky_Autonomous extends NS_Robot_Sparky {
          * In this example, it is centered (left to right), but 110 mm forward of the middle of the robot, and 200 mm above ground level.
          */
 
-        final int CAMERA_FORWARD_DISPLACEMENT = (int) (6.5 * mmPerInch);   // eg: Camera is mm in front of robot center
-        final int CAMERA_VERTICAL_DISPLACEMENT = (int) (8.5 * mmPerInch);   // eg: Camera is  mm above ground
-        final int CAMERA_LEFT_DISPLACEMENT = (int) (8.5 * mmPerInch);     // eg: Camera is ON the robot's center line
+        final int CAMERA_FORWARD_DISPLACEMENT = (int) (1.5 * mmPerInch);   // 6.5 eg: Camera is mm in front of robot center
+        final int CAMERA_VERTICAL_DISPLACEMENT = (int) (9.75 * mmPerInch);   // 8.5 eg: Camera is  mm above ground
+        final int CAMERA_LEFT_DISPLACEMENT = (int) (1.75 * mmPerInch);     // 8.5 eg: Camera is ON the robot's center line
 
         OpenGLMatrix phoneLocationOnRobot = OpenGLMatrix
                 .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
@@ -272,30 +320,17 @@ public abstract class NS_Sparky_Autonomous extends NS_Robot_Sparky {
         }
     }
 
-
-    private void SparkyTFODInitialize() {
-        int tfodMonitorViewId = hardwareMap.appContext.getResources()
-                .getIdentifier("tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
-
-        // Instantiate Tensor Flow object detection
-        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
-        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
-    }
-
     private void SparkyVuforiaActivate() {
         /** Start tracking the data sets we care about. */
         targetsRoverRuckus.activate();
     }
 
-    private void SparkyTFODActivate() {
-        if (tfod != null) tfod.activate();
-    }
-
-    private void SparkyVuforiaAcquire() throws InterruptedException {
+    private void SparkyVuforiaAcquire() { //throws InterruptedException {
         long startTime = System.currentTimeMillis();
         long currentTime = startTime;
         long timeoutPeriod = 5000; // milliseconds
+
+        GyroTurn(0.1, 50);
 
         targetVisible = false;
         while (opModeIsActive()
@@ -334,8 +369,8 @@ public abstract class NS_Sparky_Autonomous extends NS_Robot_Sparky {
                 telemetry.addData("Visible Target", "none");
                 // Turn the camera (in our case robot) to seek for the target
                 headingAngle += deltaAngle;
-                gyroTurn(headingSpeed, headingAngle);
-                WaitForSparky();
+                GyroTurn(headingSpeed, headingAngle);
+                WaitWhileBusy();
             }
             telemetry.update();
 
@@ -344,54 +379,98 @@ public abstract class NS_Sparky_Autonomous extends NS_Robot_Sparky {
     }
 
 
-    private void SparkyTFODAcquire() {
-        long startTime = System.currentTimeMillis();
-        long currentTime = startTime;
-        long timeoutPeriod = 2000; // milliseconds
+    /******
+     * TENSOR FLOW
+     */
+    private void SparkyTFODInitialize() {
+        int tfodMonitorViewId = hardwareMap.appContext.getResources()
+                .getIdentifier("tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
 
-        while (opModeIsActive()
-                && ((currentTime - startTime) < timeoutPeriod)
-                && goldPosition == MineralPosition.POS_NONE) {
-            telemetry.addData("TFOD Aquire:","ST: %d,  CT: %d,  TO: %d", startTime, currentTime, timeoutPeriod);
+        // Set our preferences
+        tfodParameters.useObjectTracker = false;
+        tfodParameters.minimumConfidence = 0.5;
+
+        // Instantiate Tensor Flow object detection
+        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
+        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
+    }
+
+    private void SparkyTFODActivate() {
+        if (tfod != null) tfod.activate();
+    }
+
+    private void SparkyTFODShutdown() {
+        if (tfod != null) tfod.shutdown();
+    }
+
+    private void SparkyTFODSampleMineral() {
+        Recognition goldRecognition = null;
+        boolean goldAlignment = false;
+        double alignmentThreshold = 25;
+        double turnSpeed = 0.1;
+        double currentDeviation = 10000, previousDeviation = 10000;
+        ElapsedTime elapsedTimer = new ElapsedTime();
+        double timeoutPeriod = 5000;
+        elapsedTimer.reset();
+
+        // Starting point for the algorithm
+        GyroTurn(NS_Sparky_Manual.PowerRegulator.ONEHALF, -60);
+
+        // Start scanning by turning the robot from right to left
+        while (opModeIsActive() && (goldAlignment == false)
+                && (elapsedTimer.time() < timeoutPeriod) && (GetCurrentAngle() < 50)) {
+
+            RCDrive(-NS_Sparky_Manual.PowerRegulator.ONETENTH, NS_Sparky_Manual.PowerRegulator.ONETENTH);
+
             if (tfod != null) {
                 // getUpdatedRecognitions() will return null if no new information is available since
                 // the last time that call was made.
                 List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
                 if (updatedRecognitions != null) {
                     telemetry.addData("# Object Detected", updatedRecognitions.size());
-                    if (updatedRecognitions.size() == 3) {
-                        int goldMineralX = -1;
-                        int silverMineral1X = -1;
-                        int silverMineral2X = -1;
-                        for (Recognition recognition : updatedRecognitions) {
-                            if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
-                                goldMineralX = (int) recognition.getLeft();
-                            } else if (silverMineral1X == -1) {
-                                silverMineral1X = (int) recognition.getLeft();
-                            } else {
-                                silverMineral2X = (int) recognition.getLeft();
+
+                    //goldRecognition = null;
+                    for (Recognition recogObj : updatedRecognitions) {
+                        telemetry.addData("Current Angle", "%f", GetCurrentAngle());
+                        if (recogObj.getLabel().equals(LABEL_GOLD_MINERAL)) {
+                            //goldRecognition = recogObj;
+                            previousDeviation = currentDeviation;
+                            currentDeviation = (recogObj.getImageWidth()/2)
+                                    - ((recogObj.getLeft()+recogObj.getRight())/2);
+                            telemetry.addData("GOLD FOUND:","PD:%f, CD:%f",
+                                    previousDeviation, currentDeviation);
+                            if (Math.abs(currentDeviation) > Math.abs(previousDeviation)) {
+                                goldAlignment = true;
+                                RCDrive(0.0, 0.0);
                             }
                         }
-                        if (goldMineralX != -1 && silverMineral1X != -1 && silverMineral2X != -1) {
-                            if (goldMineralX < silverMineral1X && goldMineralX < silverMineral2X) {
-                                goldPosition = MineralPosition.POS_LEFT;
-                                telemetry.addData("Gold Mineral Position", "Left");
-                            } else if (goldMineralX > silverMineral1X && goldMineralX > silverMineral2X) {
-                                goldPosition = MineralPosition.POS_RIGHT;
-                                telemetry.addData("Gold Mineral Position", "Right");
-                            } else {
-                                goldPosition = MineralPosition.POS_CENTER;
-                                telemetry.addData("Gold Mineral Position", "Center");
-                            }
-                        }
+                        telemetry.addData("Minerals:","Type? %s",
+                                (recogObj.getLabel().equals(LABEL_GOLD_MINERAL)) ? "Gold" : "Silver");
+                        telemetry.addData("Pos", "L:%f, R:%f, B:%f, T:%f",
+                                recogObj.getLeft(), recogObj.getRight(),
+                                recogObj.getBottom(), recogObj.getTop());
+                        telemetry.addData("Dim", "W:%f, H:%f, IW:%d, IH:%d",
+                                recogObj.getWidth(), recogObj.getHeight(),
+                                recogObj.getImageWidth(), recogObj.getImageHeight());
                     }
                     telemetry.update();
                 }
             }
-            currentTime = System.currentTimeMillis();
         }
-        if (tfod != null) {
-            tfod.shutdown();
+        // After while loop, stop turning
+        RCDrive(0, 0);
+
+        if (goldAlignment == true) {
+            double driveDistance = 0;
+            if (Math.abs(GetCurrentAngle()) > 20) { driveDistance = 30; }
+            else { driveDistance = 24; }
+            GyroDrive(NS_Sparky_Manual.PowerRegulator.FULL, driveDistance, 0.0);
+            //WaitWhileDriving();
+            GyroDrive(NS_Sparky_Manual.PowerRegulator.FULL, -driveDistance, 0.0);
+           // WaitWhileDriving();
         }
+        telemetry.addData("TFOD Sampling:", "End of Sampling");
+        telemetry.update();
     }
 }
