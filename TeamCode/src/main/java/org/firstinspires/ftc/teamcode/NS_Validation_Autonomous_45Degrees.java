@@ -5,8 +5,8 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 public class NS_Validation_Autonomous_45Degrees extends NS_Sparky_Autonomous {
 
-   public void AutonomousPreProgrammedMode() throws InterruptedException {
-        gyroTurn(NS_Sparky_Manual.PowerRegulator.ONEFOURTH, 45);
+   public void PreProgrammedPlay() throws InterruptedException {
+        GyroTurn(NS_Sparky_Manual.PowerRegulator.ONEFOURTH, 45);
     }
 
 }
